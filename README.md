@@ -8,8 +8,8 @@ A modern purchase order management system built with Next.js 14, integrating wit
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: NextAuth.js with Supabase
+- **Database**: PostgreSQL (Supabase) with Prisma ORM
+- **Authentication**: Supabase Auth
 - **API Integration**: FreeAgent
 
 ## Getting Started
@@ -17,8 +17,7 @@ A modern purchase order management system built with Next.js 14, integrating wit
 ### Prerequisites
 
 - Node.js 18+ and npm
-- PostgreSQL database
-- Supabase account
+- Supabase account (includes PostgreSQL database and authentication)
 - FreeAgent developer account
 
 ### Installation
@@ -39,10 +38,9 @@ A modern purchase order management system built with Next.js 14, integrating wit
    ```
 
    Then edit `.env` and fill in your actual values:
-   - `DATABASE_URL`: Your PostgreSQL connection string
-   - `NEXTAUTH_SECRET`: Generate with `openssl rand -base64 32`
-   - `NEXTAUTH_URL`: Your app URL (http://localhost:3000 for development)
-   - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, etc.: From your Supabase project
+   - `DATABASE_URL`: Your Supabase PostgreSQL connection string (from Supabase project settings > Database)
+   - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key (from project API settings)
    - `FREEAGENT_CLIENT_ID`, `FREEAGENT_CLIENT_SECRET`: From FreeAgent developer portal
 
 4. **Set up the database:**
@@ -73,7 +71,6 @@ po-tool/
 │   ├── (auth)/            # Authentication pages (grouped route)
 │   ├── (dashboard)/       # Protected dashboard pages (grouped route)
 │   ├── api/               # API routes
-│   │   └── auth/          # NextAuth routes
 │   ├── layout.tsx         # Root layout
 │   ├── page.tsx           # Landing page
 │   └── globals.css        # Global styles
@@ -81,25 +78,27 @@ po-tool/
 │   ├── ui/               # shadcn/ui components
 │   └── README.md         # Components documentation
 ├── lib/                   # Utilities and configurations
-│   ├── auth.ts           # NextAuth configuration
+│   ├── supabase/         # Supabase client utilities
+│   │   ├── client.ts    # Browser client
+│   │   ├── server.ts    # Server client
+│   │   └── middleware.ts # Middleware helper
 │   ├── prisma.ts         # Prisma client
 │   ├── utils.ts          # Helper functions
 │   ├── freeagent/        # FreeAgent API integration
 │   └── README.md         # Lib documentation
 ├── prisma/               # Database schema and migrations
 │   └── schema.prisma     # Prisma schema
-├── types/                # TypeScript type definitions
-│   └── next-auth.d.ts   # NextAuth type extensions
+├── middleware.ts         # Next.js middleware for auth
 └── public/               # Static assets
 ```
 
 ## Database Schema
 
 The initial schema includes:
-- **User**: User accounts with authentication
+- **User**: Application user data (syncs with Supabase auth.users)
 - **Organization**: Company/organization management
-- **Account/Session**: NextAuth session management
-- **VerificationToken**: Email verification tokens
+
+Note: Supabase handles authentication in its own `auth` schema. The User model in Prisma stores application-specific user data and uses UUIDs that match Supabase auth user IDs.
 
 Extend the schema in `prisma/schema.prisma` as needed for PO management.
 
@@ -128,10 +127,29 @@ npm run build
 
 ## Authentication Flow
 
-1. Users authenticate via Supabase OAuth
-2. NextAuth manages sessions using JWT strategy
-3. User data is stored in PostgreSQL via Prisma
-4. Protected routes check authentication status
+1. Users authenticate via Supabase Auth (email/password, OAuth providers, etc.)
+2. Middleware automatically refreshes user sessions
+3. Application-specific user data is stored in PostgreSQL via Prisma
+4. Server and client components can access auth state using Supabase clients
+
+### Using Authentication
+
+**In Server Components:**
+```typescript
+import { createClient } from '@/lib/supabase/server'
+
+const supabase = await createClient()
+const { data: { user } } = await supabase.auth.getUser()
+```
+
+**In Client Components:**
+```typescript
+'use client'
+import { createClient } from '@/lib/supabase/client'
+
+const supabase = createClient()
+const { data: { user } } = await supabase.auth.getUser()
+```
 
 ## FreeAgent Integration
 
