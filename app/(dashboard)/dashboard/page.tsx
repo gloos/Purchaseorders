@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth-helpers'
+import Link from 'next/link'
 
 export default async function DashboardPage() {
   const user = await requireAuth()
@@ -8,10 +9,13 @@ export default async function DashboardPage() {
       <nav className="bg-white dark:bg-slate-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+            <div className="flex items-center space-x-8">
+              <Link href="/dashboard" className="text-xl font-bold text-slate-900 dark:text-white">
                 PO Tool
-              </h1>
+              </Link>
+              <Link href="/purchase-orders" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                Purchase Orders
+              </Link>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-slate-600 dark:text-slate-400">
@@ -40,14 +44,14 @@ export default async function DashboardPage() {
               You're successfully authenticated! This is your dashboard where you'll manage purchase orders.
             </p>
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-lg">
+              <Link href="/purchase-orders" className="bg-slate-50 dark:bg-slate-700 p-4 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
                 <h3 className="text-lg font-medium text-slate-900 dark:text-white">
                   Purchase Orders
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-                  Coming soon...
+                  Create and manage purchase orders
                 </p>
-              </div>
+              </Link>
               <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-lg">
                 <h3 className="text-lg font-medium text-slate-900 dark:text-white">
                   Suppliers

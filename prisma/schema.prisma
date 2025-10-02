@@ -24,6 +24,8 @@ model User {
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])
 
+  createdPurchaseOrders PurchaseOrder[] @relation("CreatedPOs")
+
   @@map("users")
 }
 
@@ -36,7 +38,79 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   // Relations
-  users     User[]
+  users          User[]
+  purchaseOrders PurchaseOrder[]
 
   @@map("organizations")
+}
+
+// Purchase Order Status enum
+enum POStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SENT
+  RECEIVED
+  CANCELLED
+}
+
+// Purchase Order model
+model PurchaseOrder {
+  id             String    @id @default(uuid())
+  poNumber       String    @unique
+  title          String
+  description    String?
+  status         POStatus  @default(DRAFT)
+  totalAmount    Decimal   @db.Decimal(10, 2)
+  currency       String    @default("GBP")
+  orderDate      DateTime  @default(now())
+  deliveryDate   DateTime?
+  notes          String?
+
+  // Supplier information
+  supplierName   String
+  supplierEmail  String?
+  supplierPhone  String?
+  supplierAddress String?
+
+  // FreeAgent integration
+  freeAgentId    String?   @unique
+  syncedAt       DateTime?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdById    String
+  createdBy      User      @relation("CreatedPOs", fields: [createdById], references: [id])
+
+  lineItems      POLineItem[]
+
+  @@map("purchase_orders")
+  @@index([organizationId])
+  @@index([status])
+  @@index([orderDate])
+}
+
+// Purchase Order Line Item model
+model POLineItem {
+  id              String   @id @default(uuid())
+  description     String
+  quantity        Int
+  unitPrice       Decimal  @db.Decimal(10, 2)
+  totalPrice      Decimal  @db.Decimal(10, 2)
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@map("po_line_items")
+  @@index([purchaseOrderId])
 }
