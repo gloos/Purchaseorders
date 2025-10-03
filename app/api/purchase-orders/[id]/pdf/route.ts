@@ -54,6 +54,17 @@ export async function GET(
     const tax = subtotal * 0.20 // UK VAT rate
     const total = subtotal + tax
 
+    // Prepare company information
+    const organization = dbUser.organization
+    const companyAddress = [
+      organization.addressLine1,
+      organization.addressLine2,
+      organization.city,
+      organization.region,
+      organization.postcode,
+      organization.country
+    ].filter(Boolean).join(', ')
+
     // Generate PDF
     const stream = await renderToStream(
       PurchaseOrderPDF({
@@ -69,7 +80,14 @@ export async function GET(
         tax,
         total,
         notes: purchaseOrder.notes || undefined,
-        terms: purchaseOrder.terms || undefined,
+        terms: undefined,
+        // Company information
+        companyName: organization.name,
+        companyAddress: companyAddress || undefined,
+        companyPhone: organization.phone || undefined,
+        companyEmail: organization.email || undefined,
+        companyVatNumber: organization.vatNumber || undefined,
+        companyRegistrationNumber: organization.companyRegistrationNumber || undefined,
       })
     )
 

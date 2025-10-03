@@ -16,6 +16,14 @@ interface PurchaseOrderEmailProps {
   total: number
   notes?: string
   terms?: string
+  // Company information
+  companyName?: string
+  companyAddress?: string
+  companyPhone?: string
+  companyEmail?: string
+  companyVatNumber?: string
+  companyRegistrationNumber?: string
+  companyLogoUrl?: string
 }
 
 export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
@@ -29,6 +37,13 @@ export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
   total,
   notes,
   terms,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyEmail,
+  companyVatNumber,
+  companyRegistrationNumber,
+  companyLogoUrl,
 }) => {
   return (
     <html>
@@ -37,6 +52,31 @@ export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body style={{ fontFamily: 'Arial, sans-serif', lineHeight: '1.6', color: '#333', maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+        {/* Company Header */}
+        {companyName && (
+          <div style={{ marginBottom: '30px', paddingBottom: '20px', borderBottom: '2px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px' }}>
+              {companyLogoUrl && (
+                <img src={companyLogoUrl} alt={companyName} style={{ maxHeight: '60px', maxWidth: '150px', objectFit: 'contain' }} />
+              )}
+              <div>
+                <h2 style={{ margin: '0 0 5px 0', color: '#1e293b', fontSize: '20px' }}>{companyName}</h2>
+                {companyAddress && <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}>{companyAddress}</p>}
+                <div style={{ fontSize: '12px', color: '#64748b' }}>
+                  {companyPhone && <span style={{ marginRight: '15px' }}>Tel: {companyPhone}</span>}
+                  {companyEmail && <span>Email: {companyEmail}</span>}
+                </div>
+                {(companyRegistrationNumber || companyVatNumber) && (
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '3px' }}>
+                    {companyRegistrationNumber && <span style={{ marginRight: '15px' }}>Reg: {companyRegistrationNumber}</span>}
+                    {companyVatNumber && <span>VAT: {companyVatNumber}</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
           <h1 style={{ color: '#1e293b', marginTop: '0' }}>Purchase Order</h1>
           <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#475569' }}>PO #{poNumber}</p>

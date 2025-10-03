@@ -42,6 +42,24 @@ model Organization {
   freeAgentRefreshToken String?
   freeAgentTokenExpiry  DateTime?
 
+  // Company Profile Information
+  companyRegistrationNumber String?
+  vatNumber                 String?
+  addressLine1              String?
+  addressLine2              String?
+  city                      String?
+  region                    String?
+  postcode                  String?
+  country                   String?
+  phone                     String?
+  email                     String?
+  website                   String?
+  logoUrl                   String?
+
+  // FreeAgent company sync
+  freeAgentCompanyUrl       String?
+  companySyncedAt           DateTime?
+
   // Relations
   users          User[]
   purchaseOrders PurchaseOrder[]

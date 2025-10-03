@@ -20,6 +20,13 @@ interface PurchaseOrderPDFProps {
   total: number
   notes?: string
   terms?: string
+  // Company information
+  companyName?: string
+  companyAddress?: string
+  companyPhone?: string
+  companyEmail?: string
+  companyVatNumber?: string
+  companyRegistrationNumber?: string
 }
 
 const styles = StyleSheet.create({
@@ -148,10 +155,32 @@ export const PurchaseOrderPDF: React.FC<PurchaseOrderPDFProps> = ({
   total,
   notes,
   terms,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyEmail,
+  companyVatNumber,
+  companyRegistrationNumber,
 }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* Company Information Header */}
+        {companyName && (
+          <View style={styles.section}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 5 }}>{companyName}</Text>
+            {companyAddress && <Text style={{ fontSize: 9, color: '#666', marginBottom: 2 }}>{companyAddress}</Text>}
+            <View style={{ flexDirection: 'row', fontSize: 9, color: '#666', marginBottom: 2 }}>
+              {companyPhone && <Text style={{ marginRight: 10 }}>Tel: {companyPhone}</Text>}
+              {companyEmail && <Text>Email: {companyEmail}</Text>}
+            </View>
+            <View style={{ flexDirection: 'row', fontSize: 9, color: '#666' }}>
+              {companyRegistrationNumber && <Text style={{ marginRight: 10 }}>Reg: {companyRegistrationNumber}</Text>}
+              {companyVatNumber && <Text>VAT: {companyVatNumber}</Text>}
+            </View>
+          </View>
+        )}
+
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Purchase Order</Text>
