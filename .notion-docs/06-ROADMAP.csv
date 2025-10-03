@@ -1,7 +1,5 @@
 Feature,Quarter,Status,Priority,Category,Dependencies,Description
-Fix PO Number Race Condition,Q4 2025,Planned,Critical,Infrastructure,None,"Implement database sequence or Counters table with FOR UPDATE lock to prevent duplicate PO numbers under concurrency"
-Add Zod Input Validation,Q4 2025,Planned,Critical,Infrastructure,None,"Add comprehensive Zod schemas for all API inputs: PO creation/update, organization creation, line items validation"
-Flexible Tax Configuration,Q1 2026,Planned,High,Core,Zod Validation,"Add taxRate, taxMode fields to POs. Support inclusive/exclusive/none. Use Intl.NumberFormat for currency display"
+Flexible Tax Configuration,Q1 2026,Planned,High,Core,None,"Add taxRate, taxMode fields to POs. Support inclusive/exclusive/none. Use Intl.NumberFormat for currency display"
 Currency Flexibility,Q1 2026,Planned,High,Core,Tax Configuration,"Properly use PO.currency field throughout. Remove hard-coded £ symbol. Support multiple currencies"
 Production Email Setup,Q4 2025,Planned,High,Integration,None,"Set up verified domain in Resend. Add replyTo field. Include plain-text version. Attach PDF to emails"
 Rate Limiting,Q1 2026,Planned,Medium,Infrastructure,None,"Implement rate limiting middleware for email sending and FreeAgent sync endpoints"

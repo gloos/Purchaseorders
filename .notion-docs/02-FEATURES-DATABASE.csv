@@ -85,3 +85,13 @@ Consistent Auth Helper,Implemented,High,Infrastructure,"Centralized authenticati
 - ID-based user lookup
 - Consistent error handling
 - Reduces code duplication"
+PO Number Counter,Implemented,Critical,Infrastructure,"Atomic PO number generation with race condition prevention","- Counter model with FOR UPDATE lock
+- Prevents duplicate PO numbers
+- Organization-scoped counters
+- Transaction-safe increment
+- Supports multiple counter types"
+Zod Input Validation,Implemented,Critical,Infrastructure,"Comprehensive request validation for all API endpoints","- Type-safe request parsing
+- Automatic date transformation
+- Business logic validation
+- Detailed error messages
+- Prevents invalid data in database"
