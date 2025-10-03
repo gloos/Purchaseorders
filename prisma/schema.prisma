@@ -101,6 +101,13 @@ enum POStatus {
   CANCELLED
 }
 
+// Tax Mode enum - how tax is applied to the purchase order
+enum TaxMode {
+  INCLUSIVE  // Tax is included in line item prices
+  EXCLUSIVE  // Tax is added on top of line item prices
+  NONE       // No tax applied
+}
+
 // Purchase Order model
 model PurchaseOrder {
   id             String    @id @default(uuid())
@@ -108,8 +115,15 @@ model PurchaseOrder {
   title          String
   description    String?
   status         POStatus  @default(DRAFT)
-  totalAmount    Decimal   @db.Decimal(10, 2)
+
+  // Financial fields
+  subtotalAmount Decimal   @default(0) @db.Decimal(10, 2) // Amount before tax
+  taxMode        TaxMode   @default(EXCLUSIVE) // How tax is calculated
+  taxRate        Decimal   @default(0) @db.Decimal(5, 2) // Tax percentage (e.g., 20.00 for 20%)
+  taxAmount      Decimal   @default(0) @db.Decimal(10, 2) // Calculated tax amount
+  totalAmount    Decimal   @db.Decimal(10, 2) // Final amount (subtotal + tax for EXCLUSIVE, or subtotal for INCLUSIVE/NONE)
   currency       String    @default("GBP")
+
   orderDate      DateTime  @default(now())
   deliveryDate   DateTime?
   notes          String?

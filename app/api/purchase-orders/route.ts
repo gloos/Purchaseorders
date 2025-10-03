@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { generatePONumber } from '@/lib/counter-helpers'
 import { createPurchaseOrderSchema, validateRequestBody } from '@/lib/validations'
+import { calculateTax } from '@/lib/tax-helpers'
 
 // GET /api/purchase-orders - List all purchase orders for user's organization
 export async function GET(request: Request) {
@@ -95,14 +96,16 @@ export async function POST(request: Request) {
 
     // Date conversion is now handled by Zod validation schema
 
-    // Calculate total from line items
-    const totalAmount = lineItems.reduce((sum: number, item: any) => {
-      return sum + (item.quantity * parseFloat(item.unitPrice))
-    }, 0)
+    // Calculate tax and totals using tax helper
+    const taxMode = poData.taxMode || 'EXCLUSIVE'
+    const taxRate = poData.taxRate || 0
+    const { subtotalAmount, taxAmount, totalAmount } = calculateTax(lineItems, taxMode, taxRate)
 
     const purchaseOrder = await prisma.purchaseOrder.create({
       data: {
         ...poData,
+        subtotalAmount,
+        taxAmount,
         totalAmount,
         organizationId: dbUser.organizationId,
         createdById: user.id,

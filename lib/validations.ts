@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { POStatus } from '@prisma/client'
+import { POStatus, TaxMode } from '@prisma/client'
 
 /**
  * Validation schemas for API request bodies
@@ -22,6 +22,11 @@ export const createPurchaseOrderSchema = z.object({
   description: z.string().max(2000, 'Description too long').optional().nullable(),
   status: z.nativeEnum(POStatus).optional().default('DRAFT' as POStatus),
   currency: z.string().length(3, 'Currency must be 3-letter code').default('GBP'),
+
+  // Tax configuration
+  taxMode: z.nativeEnum(TaxMode).optional().default('EXCLUSIVE' as TaxMode),
+  taxRate: z.number().min(0, 'Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%').optional().default(0),
+
   orderDate: z.string().optional().transform((val) => val ? new Date(val).toISOString() : new Date().toISOString()),
   deliveryDate: z.string().optional().nullable().transform((val) => val ? new Date(val).toISOString() : null),
   notes: z.string().max(2000, 'Notes too long').optional().nullable(),
@@ -55,6 +60,11 @@ export const updatePurchaseOrderSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long').optional(),
   description: z.string().max(2000, 'Description too long').optional().nullable(),
   status: z.nativeEnum(POStatus).optional(),
+
+  // Tax configuration
+  taxMode: z.nativeEnum(TaxMode).optional(),
+  taxRate: z.number().min(0, 'Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%').optional(),
+
   orderDate: z.string().optional().transform((val) => val ? new Date(val).toISOString() : undefined),
   deliveryDate: z.string().optional().nullable().transform((val) => val ? new Date(val).toISOString() : null),
   notes: z.string().max(2000, 'Notes too long').optional().nullable(),

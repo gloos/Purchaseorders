@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { updatePurchaseOrderSchema, validateRequestBody } from '@/lib/validations'
+import { calculateTax } from '@/lib/tax-helpers'
 
 // GET /api/purchase-orders/[id] - Get a single purchase order
 export async function GET(
@@ -109,12 +110,33 @@ export async function PATCH(
 
     // Date conversion is now handled by Zod validation schema
 
-    // If line items are provided, recalculate total
-    let totalAmount = poData.totalAmount
+    // If line items or tax settings are provided, recalculate totals
+    let subtotalAmount: number | undefined
+    let taxAmount: number | undefined
+    let totalAmount: number | undefined
+
     if (lineItems) {
-      totalAmount = lineItems.reduce((sum: number, item: any) => {
-        return sum + (item.quantity * parseFloat(item.unitPrice))
-      }, 0)
+      // Tax settings from request or use existing PO values
+      const taxMode = poData.taxMode || existingPO.taxMode
+      const taxRate = poData.taxRate !== undefined ? poData.taxRate : existingPO.taxRate
+
+      const taxCalc = calculateTax(lineItems, taxMode, Number(taxRate))
+      subtotalAmount = taxCalc.subtotalAmount
+      taxAmount = taxCalc.taxAmount
+      totalAmount = taxCalc.totalAmount
+    } else if (poData.taxMode !== undefined || poData.taxRate !== undefined) {
+      // Tax settings changed but line items not provided - need to recalculate from existing line items
+      const existingLineItems = await prisma.pOLineItem.findMany({
+        where: { purchaseOrderId: params.id }
+      })
+
+      const taxMode = poData.taxMode || existingPO.taxMode
+      const taxRate = poData.taxRate !== undefined ? poData.taxRate : existingPO.taxRate
+
+      const taxCalc = calculateTax(existingLineItems, taxMode, Number(taxRate))
+      subtotalAmount = taxCalc.subtotalAmount
+      taxAmount = taxCalc.taxAmount
+      totalAmount = taxCalc.totalAmount
     }
 
     // Use transaction to ensure atomic updates
@@ -131,7 +153,9 @@ export async function PATCH(
         where: { id: params.id },
         data: {
           ...poData,
-          // Always set totalAmount if calculated from line items, even if 0
+          // Always set calculated amounts if they were computed
+          ...(subtotalAmount !== undefined && { subtotalAmount }),
+          ...(taxAmount !== undefined && { taxAmount }),
           ...(totalAmount !== undefined && { totalAmount }),
           ...(lineItems && {
             lineItems: {
