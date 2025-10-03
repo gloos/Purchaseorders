@@ -27,6 +27,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState('')
   const [formData, setFormData] = useState({
     name: '',
@@ -139,6 +140,39 @@ export default function ProfilePage() {
     }
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setMessage('')
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/organization/upload-logo', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage('Logo uploaded successfully!')
+        setFormData(prev => ({ ...prev, logoUrl: data.logoUrl }))
+        fetchProfile()
+      } else {
+        setMessage(`Error: ${data.error || 'Failed to upload logo'}`)
+      }
+    } catch (error) {
+      console.error('Error uploading logo:', error)
+      setMessage('Error: Failed to upload logo')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -204,6 +238,34 @@ export default function ProfilePage() {
                   />
                 </div>
               )}
+
+              {/* File Upload */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Upload Logo File
+                </label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Upload PNG, JPG, SVG, or WebP. Max 5MB. {uploading && 'Uploading...'}
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-300 dark:border-slate-600"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white dark:bg-slate-800 px-2 text-slate-500 dark:text-slate-400">Or</span>
+                </div>
+              </div>
+
+              {/* URL Input */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Logo URL
@@ -217,7 +279,7 @@ export default function ProfilePage() {
                   placeholder="https://example.com/logo.png"
                 />
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Enter a URL to your company logo image
+                  Or enter a URL to your company logo image
                 </p>
               </div>
             </div>
