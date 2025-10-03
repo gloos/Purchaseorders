@@ -66,6 +66,8 @@ export default function PurchaseOrderDetailPage() {
   const [po, setPo] = useState<PurchaseOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     if (params.id) {
@@ -115,6 +117,32 @@ export default function PurchaseOrderDetailPage() {
     }
   }
 
+  const handleSendEmail = async () => {
+    try {
+      setSending(true)
+      setMessage('')
+
+      const response = await fetch(`/api/purchase-orders/${params.id}/send-email`, {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage('Purchase order sent successfully!')
+        // Refresh the PO to update status
+        fetchPurchaseOrder()
+      } else {
+        setMessage(`Error: ${data.error || 'Failed to send email'}`)
+      }
+    } catch (error) {
+      console.error('Error sending email:', error)
+      setMessage('Error: Failed to send email')
+    } finally {
+      setSending(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-8">
@@ -142,6 +170,14 @@ export default function PurchaseOrderDetailPage() {
             <p className="text-slate-600 dark:text-slate-400 mt-1">{po.title}</p>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={handleSendEmail}
+              disabled={sending || !po.supplierEmail}
+              className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!po.supplierEmail ? 'Supplier email required' : 'Send purchase order to supplier'}
+            >
+              {sending ? 'Sending...' : 'Send Email'}
+            </button>
             <Link
               href={`/purchase-orders/${po.id}/edit`}
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
@@ -158,6 +194,17 @@ export default function PurchaseOrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Message Display */}
+      {message && (
+        <div className={`mb-6 p-4 rounded-lg ${
+          message.startsWith('Error')
+            ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+            : 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200'
+        }`}>
+          {message}
+        </div>
+      )}
 
       {/* Status Badge */}
       <div className="mb-6">

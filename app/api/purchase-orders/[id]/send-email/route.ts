@@ -42,17 +42,22 @@ export async function POST(
       return NextResponse.json({ error: 'Purchase order not found' }, { status: 404 })
     }
 
-    if (!purchaseOrder.supplierEmail) {
-      return NextResponse.json({ error: 'Supplier email not provided' }, { status: 400 })
+    if (!purchaseOrder.supplierEmail || purchaseOrder.supplierEmail.trim() === '') {
+      return NextResponse.json({ error: 'Supplier email is required' }, { status: 400 })
     }
 
-    // Prepare email data
+    // Prepare email data - convert Decimal types to numbers
     const items = purchaseOrder.lineItems.map(item => ({
       description: item.description,
       quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      total: item.total
+      unitPrice: parseFloat(item.unitPrice.toString()),
+      total: parseFloat(item.totalPrice.toString())
     }))
+
+    // Calculate subtotal from line items
+    const subtotal = items.reduce((sum, item) => sum + item.total, 0)
+    const tax = subtotal * 0.20 // UK VAT rate
+    const total = subtotal + tax
 
     // Render the email template
     const emailHtml = await renderAsync(
@@ -62,9 +67,9 @@ export async function POST(
         orderDate: purchaseOrder.orderDate.toISOString(),
         deliveryDate: purchaseOrder.deliveryDate?.toISOString(),
         items,
-        subtotal: purchaseOrder.subtotal,
-        tax: purchaseOrder.tax,
-        total: purchaseOrder.total,
+        subtotal,
+        tax,
+        total,
         notes: purchaseOrder.notes || undefined,
         terms: purchaseOrder.terms || undefined,
       })
