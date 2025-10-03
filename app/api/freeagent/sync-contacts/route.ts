@@ -1,16 +1,33 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { FreeAgentClient } from '@/lib/freeagent/client'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, getIdentifier, addRateLimitHeaders } from '@/lib/rate-limit'
 
 // POST /api/freeagent/sync-contacts - Sync contacts from FreeAgent
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Apply rate limiting (10 sync requests per minute per user)
+    const identifier = getIdentifier(request, user.id)
+    const rateLimitResult = await checkRateLimit('freeagent', identifier)
+
+    if (!rateLimitResult.success) {
+      const headers = new Headers()
+      addRateLimitHeaders(headers, rateLimitResult)
+      return NextResponse.json(
+        {
+          error: 'Too many sync requests. Please try again later.',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+        },
+        { status: 429, headers }
+      )
     }
 
     // Get user's organization with FreeAgent tokens
@@ -130,12 +147,16 @@ export async function POST() {
       }
     }
 
+    // Add rate limit headers to success response
+    const headers = new Headers()
+    addRateLimitHeaders(headers, rateLimitResult)
+
     return NextResponse.json({
       success: true,
       total: freeAgentContacts.length,
       created,
       updated
-    })
+    }, { headers })
   } catch (error) {
     console.error('Error syncing contacts:', error)
     return NextResponse.json(

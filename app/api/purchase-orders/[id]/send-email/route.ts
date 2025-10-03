@@ -6,13 +6,30 @@ import { renderAsync } from '@react-email/render'
 import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
 import { renderToStream } from '@react-pdf/renderer'
 import { PurchaseOrderPDF } from '@/lib/pdf/templates/purchase-order-pdf'
+import { checkRateLimit, getIdentifier, addRateLimitHeaders } from '@/lib/rate-limit'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { organizationId } = await getUserAndOrgOrThrow()
+    const { user, organizationId } = await getUserAndOrgOrThrow()
+
+    // Apply rate limiting (5 emails per minute per user)
+    const identifier = getIdentifier(request, user.id)
+    const rateLimitResult = await checkRateLimit('email', identifier)
+
+    if (!rateLimitResult.success) {
+      const headers = new Headers()
+      addRateLimitHeaders(headers, rateLimitResult)
+      return NextResponse.json(
+        {
+          error: 'Too many email requests. Please try again later.',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+        },
+        { status: 429, headers }
+      )
+    }
 
     // Get the purchase order with line items
     const purchaseOrder = await prisma.purchaseOrder.findFirst({
@@ -188,11 +205,15 @@ ${organization.email || ''}
       }
     })
 
+    // Add rate limit headers to success response
+    const headers = new Headers()
+    addRateLimitHeaders(headers, rateLimitResult)
+
     return NextResponse.json({
       success: true,
       emailId: data?.id,
       message: 'Purchase order sent successfully'
-    })
+    }, { headers })
   } catch (error) {
     console.error('Error sending purchase order email:', error)
     if (error instanceof Error) {
