@@ -64,6 +64,7 @@ model Organization {
   users          User[]
   purchaseOrders PurchaseOrder[]
   contacts       Contact[]
+  counters       Counter[]
 
   @@map("organizations")
 }
@@ -159,4 +160,19 @@ model POLineItem {
 
   @@map("po_line_items")
   @@index([purchaseOrderId])
+}
+
+// Counter model - for generating sequential numbers (e.g., PO numbers)
+// Uses row-level locking to prevent race conditions
+model Counter {
+  id             String   @id @default(uuid())
+  name           String   // e.g., "po_number"
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  value          Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@map("counters")
+  @@index([organizationId])
 }

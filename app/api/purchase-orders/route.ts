@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { generatePONumber } from '@/lib/counter-helpers'
 
 // GET /api/purchase-orders - List all purchase orders for user's organization
 export async function GET(request: Request) {
@@ -76,12 +77,9 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { lineItems, ...poData } = body
 
-    // Generate PO number if not provided
+    // Generate PO number if not provided (atomic, race-condition safe)
     if (!poData.poNumber) {
-      const count = await prisma.purchaseOrder.count({
-        where: { organizationId: dbUser.organizationId }
-      })
-      poData.poNumber = `PO-${String(count + 1).padStart(5, '0')}`
+      poData.poNumber = await generatePONumber(dbUser.organizationId)
     }
 
     // Convert date strings to ISO DateTime
