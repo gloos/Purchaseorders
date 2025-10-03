@@ -17,6 +17,7 @@ model User {
   email          String        @unique
   name           String?
   avatarUrl      String?
+  role           UserRole      @default(VIEWER) // User's role within their organization
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -89,6 +90,13 @@ model Contact {
   @@map("contacts")
   @@index([organizationId])
   @@index([freeAgentId])
+}
+
+// User Role enum - defines access levels within an organization
+enum UserRole {
+  ADMIN    // Full access: manage users, settings, all POs
+  MANAGER  // Can create, edit, approve, and send POs
+  VIEWER   // Read-only access to POs
 }
 
 // Purchase Order Status enum

@@ -15,6 +15,10 @@ export async function POST(
   try {
     const { user, organizationId } = await getUserAndOrgOrThrow()
 
+    // Check permission to send POs
+    const { requirePermission } = await import('@/lib/rbac')
+    requirePermission(user.role, 'canSendPO')
+
     // Apply rate limiting (5 emails per minute per user)
     const identifier = getIdentifier(request, user.id)
     const rateLimitResult = await checkRateLimit('email', identifier)
@@ -216,6 +220,14 @@ ${organization.email || ''}
     }, { headers })
   } catch (error) {
     console.error('Error sending purchase order email:', error)
+
+    // Import AuthorizationError
+    const { AuthorizationError } = await import('@/lib/rbac')
+
+    if (error instanceof AuthorizationError) {
+      return NextResponse.json({ error: error.message }, { status: 403 })
+    }
+
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

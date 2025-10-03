@@ -76,16 +76,17 @@ export async function redirectIfAuthenticated() {
  */
 export async function getUserAndOrgOrThrow() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user: authUser } } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (!authUser) {
     throw new Error('Unauthorized')
   }
 
   const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
+    where: { id: authUser.id },
     select: {
       id: true,
+      role: true,
       organizationId: true
     }
   })
@@ -95,7 +96,11 @@ export async function getUserAndOrgOrThrow() {
   }
 
   return {
-    userId: user.id,
+    user: {
+      id: authUser.id,
+      email: authUser.email!,
+      role: dbUser.role,
+    },
     organizationId: dbUser.organizationId
   }
 }
