@@ -43,10 +43,13 @@ export async function GET(
       total: parseFloat(item.totalPrice.toString())
     }))
 
-    // Calculate subtotal from line items
-    const subtotal = items.reduce((sum, item) => sum + item.total, 0)
-    const tax = subtotal * 0.20 // UK VAT rate
-    const total = subtotal + tax
+    // Use tax data from the purchase order
+    const subtotal = parseFloat(purchaseOrder.subtotalAmount.toString())
+    const tax = parseFloat(purchaseOrder.taxAmount.toString())
+    const total = parseFloat(purchaseOrder.totalAmount.toString())
+    const currency = purchaseOrder.currency
+    const taxMode = purchaseOrder.taxMode
+    const taxRate = parseFloat(purchaseOrder.taxRate.toString())
 
     // Prepare company information
     const companyAddress = [
@@ -69,7 +72,10 @@ export async function GET(
         orderDate: purchaseOrder.orderDate.toISOString(),
         deliveryDate: purchaseOrder.deliveryDate?.toISOString(),
         items,
+        currency,
         subtotal,
+        taxMode,
+        taxRate,
         tax,
         total,
         notes: purchaseOrder.notes || undefined,

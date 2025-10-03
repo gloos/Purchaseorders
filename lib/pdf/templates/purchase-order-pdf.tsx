@@ -1,6 +1,19 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 
+// Currency symbol mapping
+const getCurrencySymbol = (currency: string): string => {
+  const symbols: Record<string, string> = {
+    'GBP': '£',
+    'USD': '$',
+    'EUR': '€',
+    'JPY': '¥',
+    'CAD': 'C$',
+    'AUD': 'A$'
+  }
+  return symbols[currency] || currency
+}
+
 interface PurchaseOrderPDFProps {
   poNumber: string
   supplierName: string
@@ -15,7 +28,10 @@ interface PurchaseOrderPDFProps {
     unitPrice: number
     total: number
   }>
+  currency: string
   subtotal: number
+  taxMode: 'NONE' | 'EXCLUSIVE' | 'INCLUSIVE'
+  taxRate: number
   tax: number
   total: number
   notes?: string
@@ -149,6 +165,9 @@ export const PurchaseOrderPDF: React.FC<PurchaseOrderPDFProps> = ({
   supplierAddress,
   orderDate,
   deliveryDate,
+  currency,
+  taxMode,
+  taxRate,
   items,
   subtotal,
   tax,
@@ -243,8 +262,8 @@ export const PurchaseOrderPDF: React.FC<PurchaseOrderPDFProps> = ({
               <View key={index} style={styles.tableRow}>
                 <Text style={styles.tableColDescription}>{item.description}</Text>
                 <Text style={styles.tableColQuantity}>{item.quantity}</Text>
-                <Text style={styles.tableColUnitPrice}>£{item.unitPrice.toFixed(2)}</Text>
-                <Text style={styles.tableColTotal}>£{item.total.toFixed(2)}</Text>
+                <Text style={styles.tableColUnitPrice}>{getCurrencySymbol(currency)}{item.unitPrice.toFixed(2)}</Text>
+                <Text style={styles.tableColTotal}>{getCurrencySymbol(currency)}{item.total.toFixed(2)}</Text>
               </View>
             ))}
           </View>
@@ -253,15 +272,17 @@ export const PurchaseOrderPDF: React.FC<PurchaseOrderPDFProps> = ({
           <View style={styles.totalsSection}>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Subtotal:</Text>
-              <Text>£{subtotal.toFixed(2)}</Text>
+              <Text>{getCurrencySymbol(currency)}{subtotal.toFixed(2)}</Text>
             </View>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Tax (20%):</Text>
-              <Text>£{tax.toFixed(2)}</Text>
-            </View>
+            {taxMode !== 'NONE' && taxRate > 0 && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Tax ({taxRate.toFixed(2)}% {taxMode === 'INCLUSIVE' ? 'incl.' : 'excl.'}):</Text>
+                <Text>{getCurrencySymbol(currency)}{tax.toFixed(2)}</Text>
+              </View>
+            )}
             <View style={styles.grandTotalRow}>
               <Text>Total:</Text>
-              <Text>£{total.toFixed(2)}</Text>
+              <Text>{getCurrencySymbol(currency)}{total.toFixed(2)}</Text>
             </View>
           </View>
         </View>

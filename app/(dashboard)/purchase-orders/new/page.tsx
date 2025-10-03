@@ -31,6 +31,8 @@ export default function NewPurchaseOrderPage() {
     description: '',
     status: 'DRAFT',
     currency: 'GBP',
+    taxMode: 'EXCLUSIVE',
+    taxRate: 0,
     orderDate: new Date().toISOString().split('T')[0],
     deliveryDate: '',
     supplierName: '',
@@ -111,10 +113,30 @@ export default function NewPurchaseOrderPage() {
     }
   }
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     return lineItems.reduce((sum, item) => {
       return sum + (item.quantity * parseFloat(item.unitPrice || '0'))
     }, 0)
+  }
+
+  const calculateTax = () => {
+    const subtotal = calculateSubtotal()
+    const taxRate = parseFloat(String(formData.taxRate || 0))
+
+    if (formData.taxMode === 'NONE' || taxRate === 0) {
+      return { subtotal, tax: 0, total: subtotal }
+    } else if (formData.taxMode === 'EXCLUSIVE') {
+      // Tax added on top
+      const tax = (subtotal * taxRate) / 100
+      return { subtotal, tax, total: subtotal + tax }
+    } else if (formData.taxMode === 'INCLUSIVE') {
+      // Tax already included in prices
+      const total = subtotal
+      const subtotalBeforeTax = total / (1 + taxRate / 100)
+      const tax = total - subtotalBeforeTax
+      return { subtotal: subtotalBeforeTax, tax, total }
+    }
+    return { subtotal, tax: 0, total: subtotal }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -224,6 +246,38 @@ export default function NewPurchaseOrderPage() {
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Tax Mode *
+              </label>
+              <select
+                name="taxMode"
+                value={formData.taxMode}
+                onChange={handleChange}
+                required
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              >
+                <option value="NONE">No Tax</option>
+                <option value="EXCLUSIVE">Tax Exclusive (added on top)</option>
+                <option value="INCLUSIVE">Tax Inclusive (included in prices)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Tax Rate (%)
+              </label>
+              <input
+                type="number"
+                name="taxRate"
+                value={formData.taxRate}
+                onChange={handleChange}
+                min="0"
+                max="100"
+                step="0.01"
+                disabled={formData.taxMode === 'NONE'}
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -416,10 +470,18 @@ export default function NewPurchaseOrderPage() {
             ))}
           </div>
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <div className="text-right">
-              <span className="text-lg font-semibold text-slate-900 dark:text-white">
-                Total Amount: {formData.currency} {calculateTotal().toFixed(2)}
-              </span>
+            <div className="space-y-2 text-right">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                <span>Subtotal: {formData.currency} {calculateTax().subtotal.toFixed(2)}</span>
+              </div>
+              {formData.taxMode !== 'NONE' && parseFloat(String(formData.taxRate || 0)) > 0 && (
+                <div className="text-sm text-slate-600 dark:text-slate-400">
+                  <span>Tax ({formData.taxRate}% {formData.taxMode === 'INCLUSIVE' ? 'incl.' : 'excl.'}): {formData.currency} {calculateTax().tax.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="text-lg font-semibold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-700">
+                <span>Total Amount: {formData.currency} {calculateTax().total.toFixed(2)}</span>
+              </div>
             </div>
           </div>
         </div>

@@ -23,6 +23,10 @@ interface PurchaseOrder {
   title: string
   description?: string | null
   status: POStatus
+  subtotalAmount: string
+  taxMode: 'NONE' | 'EXCLUSIVE' | 'INCLUSIVE'
+  taxRate: string
+  taxAmount: string
   totalAmount: string
   currency: string
   orderDate: string
@@ -317,6 +321,24 @@ export default function PurchaseOrderDetailPage() {
                   ))}
                 </tbody>
                 <tfoot>
+                  <tr className="border-t border-slate-200 dark:border-slate-600">
+                    <td colSpan={3} className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 text-right">
+                      Subtotal
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-900 dark:text-white text-right">
+                      {po.currency} {parseFloat(po.subtotalAmount).toFixed(2)}
+                    </td>
+                  </tr>
+                  {po.taxMode !== 'NONE' && parseFloat(po.taxRate) > 0 && (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 text-right">
+                        Tax ({parseFloat(po.taxRate).toFixed(2)}% {po.taxMode === 'INCLUSIVE' ? 'incl.' : 'excl.'})
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-900 dark:text-white text-right">
+                        {po.currency} {parseFloat(po.taxAmount).toFixed(2)}
+                      </td>
+                    </tr>
+                  )}
                   <tr className="border-t-2 border-slate-300 dark:border-slate-600">
                     <td colSpan={3} className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white text-right">
                       Total Amount
