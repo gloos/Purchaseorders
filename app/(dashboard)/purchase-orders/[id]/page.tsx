@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { Navbar } from '@/components/navbar'
 
 type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'CANCELLED'
 
@@ -145,9 +146,12 @@ export default function PurchaseOrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="text-center py-12">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <Navbar />
+        <div className="p-8">
+          <div className="text-center py-12">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          </div>
         </div>
       </div>
     )
@@ -158,9 +162,11 @@ export default function PurchaseOrderDetailPage() {
   }
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <Navbar />
+      <div className="p-8">
+        {/* Header */}
+        <div className="mb-6">
         <Link href="/purchase-orders" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
           ← Back to Purchase Orders
         </Link>
@@ -368,6 +374,7 @@ export default function PurchaseOrderDetailPage() {
             <p className="text-sm text-slate-900 dark:text-white">{po.organization.name}</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

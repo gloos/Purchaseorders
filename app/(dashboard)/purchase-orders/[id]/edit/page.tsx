@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Navbar } from '@/components/navbar'
 
 interface LineItem {
   id: string
@@ -212,17 +213,22 @@ export default function EditPurchaseOrderPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="text-center py-12">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <Navbar />
+        <div className="p-8">
+          <div className="text-center py-12">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <Navbar />
+      <div className="p-8">
+        <div className="mb-6">
         <Link href={`/purchase-orders/${params.id}`} className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
           ← Back to Purchase Order
         </Link>
@@ -526,6 +532,7 @@ export default function EditPurchaseOrderPage() {
           </Link>
         </div>
       </form>
+      </div>
     </div>
   )
 }

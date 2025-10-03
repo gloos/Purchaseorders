@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { Navbar } from '@/components/navbar'
 
 interface Contact {
   id: string
@@ -78,8 +79,10 @@ export default function FreeAgentContactsPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <Navbar />
+      <div className="p-8">
+        <div className="mb-6">
         <Link href="/dashboard" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
           ← Back to Dashboard
         </Link>
@@ -172,6 +175,7 @@ export default function FreeAgentContactsPage() {
           </table>
         </div>
       )}
+      </div>
     </div>
   )
 }

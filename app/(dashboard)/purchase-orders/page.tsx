@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { Navbar } from '@/components/navbar'
 
 type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'CANCELLED'
 
@@ -67,8 +68,10 @@ export default function PurchaseOrdersPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <Navbar />
+      <div className="p-8">
+        <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Purchase Orders</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">Manage your purchase orders</p>
@@ -177,6 +180,7 @@ export default function PurchaseOrdersPage() {
           </table>
         </div>
       )}
+      </div>
     </div>
   )
 }

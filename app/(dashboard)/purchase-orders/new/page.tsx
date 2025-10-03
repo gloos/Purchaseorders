@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Navbar } from '@/components/navbar'
 
 interface LineItem {
   id: string
@@ -149,8 +150,10 @@ export default function NewPurchaseOrderPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <Navbar />
+      <div className="p-8">
+        <div className="mb-6">
         <Link href="/purchase-orders" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
           ← Back to Purchase Orders
         </Link>
@@ -451,6 +454,7 @@ export default function NewPurchaseOrderPage() {
           </Link>
         </div>
       </form>
+      </div>
     </div>
   )
 }

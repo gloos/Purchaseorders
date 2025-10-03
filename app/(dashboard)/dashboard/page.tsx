@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { Navbar } from '@/components/navbar'
 
 interface DashboardAnalytics {
   summary: {
@@ -72,14 +73,6 @@ export default function DashboardPage() {
     }
   }
 
-  const handleSignOut = async () => {
-    const form = document.createElement('form')
-    form.method = 'POST'
-    form.action = '/auth/signout'
-    document.body.appendChild(form)
-    form.submit()
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
@@ -96,31 +89,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <nav className="bg-white dark:bg-slate-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <Link href="/dashboard" className="text-xl font-bold text-slate-900 dark:text-white">
-                PO Tool
-              </Link>
-              <Link href="/purchase-orders" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                Purchase Orders
-              </Link>
-              <Link href="/freeagent/contacts" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                Contacts
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleSignOut}
-                className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
