@@ -11,7 +11,10 @@ interface PurchaseOrderEmailProps {
     unitPrice: number
     total: number
   }>
+  currency: string
   subtotal: number
+  taxMode: 'NONE' | 'EXCLUSIVE' | 'INCLUSIVE'
+  taxRate: number
   tax: number
   total: number
   notes?: string
@@ -32,7 +35,10 @@ export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
   orderDate,
   deliveryDate,
   items,
+  currency,
   subtotal,
+  taxMode,
+  taxRate,
   tax,
   total,
   notes,
@@ -45,6 +51,19 @@ export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
   companyRegistrationNumber,
   companyLogoUrl,
 }) => {
+  const getCurrencySymbol = (curr: string): string => {
+    const symbols: Record<string, string> = {
+      'GBP': '£',
+      'USD': '$',
+      'EUR': '€',
+      'JPY': '¥',
+      'CAD': 'C$',
+      'AUD': 'A$'
+    }
+    return symbols[curr] || curr
+  }
+
+  const currencySymbol = getCurrencySymbol(currency)
   return (
     <html>
       <head>
@@ -105,8 +124,8 @@ export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
                 <tr key={index} style={{ borderBottom: '1px solid #e2e8f0' }}>
                   <td style={{ padding: '12px' }}>{item.description}</td>
                   <td style={{ padding: '12px', textAlign: 'right' }}>{item.quantity}</td>
-                  <td style={{ padding: '12px', textAlign: 'right' }}>£{item.unitPrice.toFixed(2)}</td>
-                  <td style={{ padding: '12px', textAlign: 'right' }}>£{item.total.toFixed(2)}</td>
+                  <td style={{ padding: '12px', textAlign: 'right' }}>{currencySymbol}{item.unitPrice.toFixed(2)}</td>
+                  <td style={{ padding: '12px', textAlign: 'right' }}>{currencySymbol}{item.total.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -118,15 +137,17 @@ export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
             <tbody>
               <tr>
                 <td style={{ padding: '8px', textAlign: 'right' }}><strong>Subtotal:</strong></td>
-                <td style={{ padding: '8px', textAlign: 'right' }}>£{subtotal.toFixed(2)}</td>
+                <td style={{ padding: '8px', textAlign: 'right' }}>{currencySymbol}{subtotal.toFixed(2)}</td>
               </tr>
-              <tr>
-                <td style={{ padding: '8px', textAlign: 'right' }}><strong>Tax (20%):</strong></td>
-                <td style={{ padding: '8px', textAlign: 'right' }}>£{tax.toFixed(2)}</td>
-              </tr>
+              {taxMode !== 'NONE' && taxRate > 0 && (
+                <tr>
+                  <td style={{ padding: '8px', textAlign: 'right' }}><strong>Tax ({taxRate.toFixed(2)}% {taxMode === 'INCLUSIVE' ? 'incl.' : 'excl.'}):</strong></td>
+                  <td style={{ padding: '8px', textAlign: 'right' }}>{currencySymbol}{tax.toFixed(2)}</td>
+                </tr>
+              )}
               <tr style={{ borderTop: '2px solid #1e293b' }}>
                 <td style={{ padding: '8px', textAlign: 'right', fontSize: '18px' }}><strong>Total:</strong></td>
-                <td style={{ padding: '8px', textAlign: 'right', fontSize: '18px' }}><strong>£{total.toFixed(2)}</strong></td>
+                <td style={{ padding: '8px', textAlign: 'right', fontSize: '18px' }}><strong>{currencySymbol}{total.toFixed(2)}</strong></td>
               </tr>
             </tbody>
           </table>
