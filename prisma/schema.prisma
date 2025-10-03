@@ -151,9 +151,10 @@ model PurchaseOrder {
   lineItems      POLineItem[]
 
   @@map("purchase_orders")
-  @@index([organizationId])
-  @@index([status])
-  @@index([orderDate])
+  @@unique([organizationId, poNumber]) // Ensure PO numbers are unique per organization
+  @@index([organizationId, status]) // Optimize queries filtering by org and status
+  @@index([organizationId, orderDate]) // Optimize queries filtering by org and date
+  @@index([organizationId]) // Keep for general org queries
 }
 
 // Purchase Order Line Item model
