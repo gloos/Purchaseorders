@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
-import { refreshFreeAgentToken } from '@/lib/freeagent/client'
+import { FreeAgentClient } from '@/lib/freeagent/client'
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +32,11 @@ export async function POST(request: NextRequest) {
     // Refresh token if needed
     let accessToken = organization.freeAgentAccessToken
     if (organization.freeAgentTokenExpiry && new Date(organization.freeAgentTokenExpiry) < new Date()) {
-      const refreshed = await refreshFreeAgentToken(organization.freeAgentRefreshToken!)
+      const refreshed = await FreeAgentClient.refreshAccessToken(
+        organization.freeAgentRefreshToken!,
+        process.env.FREEAGENT_CLIENT_ID!,
+        process.env.FREEAGENT_CLIENT_SECRET!
+      )
       accessToken = refreshed.access_token
 
       await prisma.organization.update({
