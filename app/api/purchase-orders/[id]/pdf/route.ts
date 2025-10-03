@@ -1,36 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { renderToStream } from '@react-pdf/renderer'
 import { PurchaseOrderPDF } from '@/lib/pdf/templates/purchase-order-pdf'
+import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get the user's organization
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: { organization: true }
-    })
-
-    if (!dbUser?.organization) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
-    }
+    const { organizationId } = await getUserAndOrgOrThrow()
 
     // Get the purchase order with line items
     const purchaseOrder = await prisma.purchaseOrder.findFirst({
       where: {
         id: params.id,
-        organizationId: dbUser.organizationId
+        organizationId
       },
       include: {
         lineItems: true
@@ -39,6 +24,15 @@ export async function GET(
 
     if (!purchaseOrder) {
       return NextResponse.json({ error: 'Purchase order not found' }, { status: 404 })
+    }
+
+    // Get organization information
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId }
+    })
+
+    if (!organization) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
     // Prepare PDF data - convert Decimal types to numbers
@@ -55,7 +49,6 @@ export async function GET(
     const total = subtotal + tax
 
     // Prepare company information
-    const organization = dbUser.organization
     const companyAddress = [
       organization.addressLine1,
       organization.addressLine2,
@@ -107,6 +100,14 @@ export async function GET(
     })
   } catch (error) {
     console.error('Error generating PDF:', error)
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
     return NextResponse.json(
       { error: 'Failed to generate PDF' },
       { status: 500 }

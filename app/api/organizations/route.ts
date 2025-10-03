@@ -19,6 +19,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 })
     }
 
+    // Validate slug format (lowercase alphanumeric and hyphens, 3-50 characters)
+    const slugPattern = /^[a-z0-9-]{3,50}$/
+    if (!slugPattern.test(slug)) {
+      return NextResponse.json({
+        error: 'Slug must be 3-50 characters, lowercase letters, numbers, and hyphens only'
+      }, { status: 400 })
+    }
+
     // Check if slug already exists
     const existingOrg = await prisma.organization.findUnique({
       where: { slug }

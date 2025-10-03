@@ -69,3 +69,33 @@ export async function redirectIfAuthenticated() {
     redirect('/dashboard')
   }
 }
+
+/**
+ * Get authenticated user and their organization ID for API routes
+ * Throws error if user is not authenticated or has no organization
+ */
+export async function getUserAndOrgOrThrow() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      id: true,
+      organizationId: true
+    }
+  })
+
+  if (!dbUser?.organizationId) {
+    throw new Error('No organization found')
+  }
+
+  return {
+    userId: user.id,
+    organizationId: dbUser.organizationId
+  }
+}

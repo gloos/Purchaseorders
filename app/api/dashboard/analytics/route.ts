@@ -1,30 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
+import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get the user's organization
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: { organization: true }
-    })
-
-    if (!dbUser?.organization) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
-    }
+    const { organizationId } = await getUserAndOrgOrThrow()
 
     // Get all purchase orders for analytics
     const purchaseOrders = await prisma.purchaseOrder.findMany({
       where: {
-        organizationId: dbUser.organizationId
+        organizationId
       },
       select: {
         id: true,
@@ -76,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Get recent activity (last 10 POs)
     const recentActivity = await prisma.purchaseOrder.findMany({
       where: {
-        organizationId: dbUser.organizationId
+        organizationId
       },
       select: {
         id: true,
@@ -107,6 +92,14 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching dashboard analytics:', error)
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
     return NextResponse.json(
       { error: 'Failed to fetch analytics' },
       { status: 500 }

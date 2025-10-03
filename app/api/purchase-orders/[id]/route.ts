@@ -110,40 +110,47 @@ export async function PATCH(
       totalAmount = lineItems.reduce((sum: number, item: any) => {
         return sum + (item.quantity * parseFloat(item.unitPrice))
       }, 0)
-
-      // Delete existing line items and create new ones
-      await prisma.pOLineItem.deleteMany({
-        where: { purchaseOrderId: params.id }
-      })
     }
 
-    const purchaseOrder = await prisma.purchaseOrder.update({
-      where: { id: params.id },
-      data: {
-        ...poData,
-        ...(totalAmount && { totalAmount }),
-        ...(lineItems && {
-          lineItems: {
-            create: lineItems.map((item: any) => ({
-              description: item.description,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              totalPrice: item.quantity * parseFloat(item.unitPrice),
-              notes: item.notes
-            }))
-          }
+    // Use transaction to ensure atomic updates
+    const purchaseOrder = await prisma.$transaction(async (tx) => {
+      // Delete existing line items if new ones are provided
+      if (lineItems) {
+        await tx.pOLineItem.deleteMany({
+          where: { purchaseOrderId: params.id }
         })
-      },
-      include: {
-        lineItems: true,
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+      }
+
+      // Update purchase order
+      return await tx.purchaseOrder.update({
+        where: { id: params.id },
+        data: {
+          ...poData,
+          // Always set totalAmount if calculated from line items, even if 0
+          ...(totalAmount !== undefined && { totalAmount }),
+          ...(lineItems && {
+            lineItems: {
+              create: lineItems.map((item: any) => ({
+                description: item.description,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.quantity * parseFloat(item.unitPrice),
+                notes: item.notes
+              }))
+            }
+          })
+        },
+        include: {
+          lineItems: true,
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
           }
         }
-      }
+      })
     })
 
     return NextResponse.json(purchaseOrder)

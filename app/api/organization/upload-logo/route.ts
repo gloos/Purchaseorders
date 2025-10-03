@@ -1,23 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
+import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
   try {
+    const { organizationId } = await getUserAndOrgOrThrow()
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get the user's organization
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: { organization: true }
+    // Get the organization
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { id: true, logoUrl: true }
     })
 
-    if (!dbUser?.organization) {
+    if (!organization) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
@@ -42,11 +39,11 @@ export async function POST(request: NextRequest) {
 
     // Create unique file name
     const fileExt = file.name.split('.').pop()
-    const fileName = `${dbUser.organizationId}-${Date.now()}.${fileExt}`
+    const fileName = `${organizationId}-${Date.now()}.${fileExt}`
 
     // Delete old logo if exists
-    if (dbUser.organization.logoUrl) {
-      const oldFileName = dbUser.organization.logoUrl.split('/').pop()
+    if (organization.logoUrl) {
+      const oldFileName = organization.logoUrl.split('/').pop()
       if (oldFileName) {
         await supabase.storage
           .from('company-logos')
@@ -74,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Update organization with new logo URL
     await prisma.organization.update({
-      where: { id: dbUser.organizationId! },
+      where: { id: organizationId },
       data: {
         logoUrl: publicUrl
       }
@@ -86,6 +83,14 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error uploading logo:', error)
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
     return NextResponse.json(
       { error: 'Failed to upload logo' },
       { status: 500 }

@@ -1,27 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
+import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { organizationId } = await getUserAndOrgOrThrow()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get the user's organization
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: { organization: true }
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId }
     })
 
-    if (!dbUser?.organization) {
+    if (!organization) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
-
-    const { organization } = dbUser
 
     return NextResponse.json({
       id: organization.id,
@@ -42,6 +33,14 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching organization profile:', error)
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
     return NextResponse.json(
       { error: 'Failed to fetch organization profile' },
       { status: 500 }
@@ -51,28 +50,13 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get the user's organization
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: { organization: true }
-    })
-
-    if (!dbUser?.organization) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
-    }
+    const { organizationId } = await getUserAndOrgOrThrow()
 
     const body = await request.json()
 
     // Update organization profile
     const updatedOrganization = await prisma.organization.update({
-      where: { id: dbUser.organizationId! },
+      where: { id: organizationId },
       data: {
         name: body.name,
         companyRegistrationNumber: body.companyRegistrationNumber,
@@ -109,6 +93,14 @@ export async function PATCH(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error updating organization profile:', error)
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
     return NextResponse.json(
       { error: 'Failed to update organization profile' },
       { status: 500 }

@@ -1,28 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { FreeAgentClient } from '@/lib/freeagent/client'
+import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { organizationId } = await getUserAndOrgOrThrow()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get the user's organization
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: { organization: true }
+    // Get the organization
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId }
     })
 
-    if (!dbUser?.organization) {
+    if (!organization) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
-
-    const organization = dbUser.organization
 
     // Check if FreeAgent is connected
     if (!organization.freeAgentAccessToken) {
@@ -91,6 +83,14 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error syncing company:', error)
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
     return NextResponse.json(
       { error: 'Failed to sync company information' },
       { status: 500 }
