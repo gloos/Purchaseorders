@@ -37,11 +37,39 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // FreeAgent OAuth tokens
+  freeAgentAccessToken  String?
+  freeAgentRefreshToken String?
+  freeAgentTokenExpiry  DateTime?
+
   // Relations
   users          User[]
   purchaseOrders PurchaseOrder[]
+  contacts       Contact[]
 
   @@map("organizations")
+}
+
+// Contact/Supplier model - synced from FreeAgent
+model Contact {
+  id                String    @id @default(uuid())
+  freeAgentId       String    @unique
+  name              String
+  email             String?
+  phone             String?
+  address           String?
+  isActive          Boolean   @default(true)
+  syncedAt          DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("contacts")
+  @@index([organizationId])
+  @@index([freeAgentId])
 }
 
 // Purchase Order Status enum

@@ -1,0 +1,177 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+
+interface Contact {
+  id: string
+  freeAgentId: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  address?: string | null
+  isActive: boolean
+  syncedAt: string
+}
+
+export default function FreeAgentContactsPage() {
+  const searchParams = useSearchParams()
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    // Check for success/error messages
+    const success = searchParams.get('success')
+    const error = searchParams.get('error')
+
+    if (success === 'freeagent_connected') {
+      setMessage('FreeAgent connected successfully! You can now sync contacts.')
+    } else if (error) {
+      setMessage(`Error: ${error}`)
+    }
+
+    fetchContacts()
+  }, [searchParams])
+
+  const fetchContacts = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/contacts')
+      if (response.ok) {
+        const data = await response.json()
+        setContacts(data)
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSync = async () => {
+    try {
+      setSyncing(true)
+      setMessage('')
+
+      const response = await fetch('/api/freeagent/sync-contacts', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage(`Successfully synced! Created: ${data.created}, Updated: ${data.updated}`)
+        // Fetch contacts again to show the new data
+        fetchContacts()
+      } else {
+        setMessage(`Error: ${data.error || 'Failed to sync contacts'}`)
+      }
+    } catch (error) {
+      console.error('Error syncing contacts:', error)
+      setMessage('Error: Failed to sync contacts')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  return (
+    <div className="p-8">
+      <div className="mb-6">
+        <Link href="/dashboard" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
+          ← Back to Dashboard
+        </Link>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">FreeAgent Contacts</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-1">Manage contacts synced from FreeAgent</p>
+          </div>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {syncing ? 'Syncing...' : 'Sync from FreeAgent'}
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div className={`mb-6 p-4 rounded-lg ${
+          message.startsWith('Error')
+            ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+            : 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200'
+        }`}>
+          {message}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+        </div>
+      ) : contacts.length === 0 ? (
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-12 text-center">
+          <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">No contacts yet</h3>
+          <p className="mt-2 text-slate-600 dark:text-slate-400">Click "Sync from FreeAgent" to import your contacts</p>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead className="bg-slate-50 dark:bg-slate-900">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Phone
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Last Synced
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+              {contacts.map((contact) => (
+                <tr key={contact.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">{contact.name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-slate-900 dark:text-white">{contact.email || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-slate-900 dark:text-white">{contact.phone || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      contact.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {contact.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                    {new Date(contact.syncedAt).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}

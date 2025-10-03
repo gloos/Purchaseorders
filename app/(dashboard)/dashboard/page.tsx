@@ -1,8 +1,26 @@
 import { requireAuth } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 
 export default async function DashboardPage() {
   const user = await requireAuth()
+
+  // Get organization with FreeAgent connection status
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: {
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          freeAgentAccessToken: true,
+          freeAgentTokenExpiry: true
+        }
+      }
+    }
+  })
+
+  const isFreeAgentConnected = !!dbUser?.organization?.freeAgentAccessToken
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -64,9 +82,34 @@ export default async function DashboardPage() {
                 <h3 className="text-lg font-medium text-slate-900 dark:text-white">
                   FreeAgent Integration
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-                  Coming soon...
-                </p>
+                {isFreeAgentConnected ? (
+                  <>
+                    <p className="text-sm text-green-600 dark:text-green-400 mt-2 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Connected
+                    </p>
+                    <Link
+                      href="/freeagent/contacts"
+                      className="mt-2 inline-block text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      Manage Contacts →
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
+                      Connect to sync contacts and create bills
+                    </p>
+                    <a
+                      href="/api/freeagent/authorize"
+                      className="mt-2 inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1 px-3 rounded"
+                    >
+                      Connect FreeAgent
+                    </a>
+                  </>
+                )}
               </div>
             </div>
           </div>

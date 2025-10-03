@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -12,9 +12,19 @@ interface LineItem {
   notes: string
 }
 
+interface Contact {
+  id: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  address?: string | null
+}
+
 export default function NewPurchaseOrderPage() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [selectedContactId, setSelectedContactId] = useState('')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -32,6 +42,49 @@ export default function NewPurchaseOrderPage() {
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { id: '1', description: '', quantity: 1, unitPrice: '0.00', notes: '' }
   ])
+
+  useEffect(() => {
+    fetchContacts()
+  }, [])
+
+  const fetchContacts = async () => {
+    try {
+      const response = await fetch('/api/contacts')
+      if (response.ok) {
+        const data = await response.json()
+        setContacts(data)
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error)
+    }
+  }
+
+  const handleContactSelect = (contactId: string) => {
+    setSelectedContactId(contactId)
+
+    if (!contactId) {
+      // Clear supplier fields
+      setFormData({
+        ...formData,
+        supplierName: '',
+        supplierEmail: '',
+        supplierPhone: '',
+        supplierAddress: ''
+      })
+      return
+    }
+
+    const contact = contacts.find(c => c.id === contactId)
+    if (contact) {
+      setFormData({
+        ...formData,
+        supplierName: contact.name,
+        supplierEmail: contact.email || '',
+        supplierPhone: contact.phone || '',
+        supplierAddress: contact.address || ''
+      })
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -201,6 +254,23 @@ export default function NewPurchaseOrderPage() {
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Supplier Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Select from Contacts
+              </label>
+              <select
+                value={selectedContactId}
+                onChange={(e) => handleContactSelect(e.target.value)}
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              >
+                <option value="">-- Select a contact or enter manually --</option>
+                {contacts.map((contact) => (
+                  <option key={contact.id} value={contact.id}>
+                    {contact.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Supplier Name *
