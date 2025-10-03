@@ -170,6 +170,15 @@ export default function PurchaseOrderDetailPage() {
             <p className="text-slate-600 dark:text-slate-400 mt-1">{po.title}</p>
           </div>
           <div className="flex gap-2">
+            <a
+              href={`/api/purchase-orders/${po.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              title="Download PDF"
+            >
+              Download PDF
+            </a>
             <button
               onClick={handleSendEmail}
               disabled={sending || !po.supplierEmail}
