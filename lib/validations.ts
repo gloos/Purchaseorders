@@ -1,0 +1,140 @@
+import { z } from 'zod'
+import { POStatus } from '@prisma/client'
+
+/**
+ * Validation schemas for API request bodies
+ * Uses Zod for runtime type checking and validation
+ */
+
+// Line Item validation schema
+export const lineItemSchema = z.object({
+  description: z.string().min(1, 'Description is required').max(500, 'Description too long'),
+  quantity: z.number().int().positive('Quantity must be positive'),
+  unitPrice: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid price format').or(z.number().positive('Unit price must be positive')),
+  notes: z.string().max(1000, 'Notes too long').optional().nullable()
+})
+
+// Purchase Order creation schema
+export const createPurchaseOrderSchema = z.object({
+  // Optional fields
+  poNumber: z.string().max(50, 'PO number too long').optional(),
+  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
+  description: z.string().max(2000, 'Description too long').optional().nullable(),
+  status: z.nativeEnum(POStatus).optional().default('DRAFT' as POStatus),
+  currency: z.string().length(3, 'Currency must be 3-letter code').default('GBP'),
+  orderDate: z.string().optional().transform((val) => val ? new Date(val).toISOString() : new Date().toISOString()),
+  deliveryDate: z.string().optional().nullable().transform((val) => val ? new Date(val).toISOString() : null),
+  notes: z.string().max(2000, 'Notes too long').optional().nullable(),
+
+  // Supplier information - all required
+  supplierName: z.string().min(1, 'Supplier name is required').max(200, 'Supplier name too long'),
+  supplierEmail: z.string().email('Invalid email').optional().nullable(),
+  supplierPhone: z.string().max(50, 'Phone number too long').optional().nullable(),
+  supplierAddress: z.string().max(500, 'Address too long').optional().nullable(),
+
+  // Line items - required, must have at least one
+  lineItems: z.array(lineItemSchema).min(1, 'At least one line item is required').max(100, 'Too many line items')
+}).refine(
+  (data) => {
+    // If deliveryDate is provided, it should be after orderDate
+    if (data.deliveryDate && data.orderDate) {
+      const order = new Date(data.orderDate)
+      const delivery = new Date(data.deliveryDate)
+      return delivery >= order
+    }
+    return true
+  },
+  {
+    message: 'Delivery date must be on or after order date',
+    path: ['deliveryDate']
+  }
+)
+
+// Purchase Order update schema (all fields optional except lineItems if provided)
+export const updatePurchaseOrderSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200, 'Title too long').optional(),
+  description: z.string().max(2000, 'Description too long').optional().nullable(),
+  status: z.nativeEnum(POStatus).optional(),
+  orderDate: z.string().optional().transform((val) => val ? new Date(val).toISOString() : undefined),
+  deliveryDate: z.string().optional().nullable().transform((val) => val ? new Date(val).toISOString() : null),
+  notes: z.string().max(2000, 'Notes too long').optional().nullable(),
+
+  supplierName: z.string().min(1, 'Supplier name is required').max(200, 'Supplier name too long').optional(),
+  supplierEmail: z.string().email('Invalid email').optional().nullable(),
+  supplierPhone: z.string().max(50, 'Phone number too long').optional().nullable(),
+  supplierAddress: z.string().max(500, 'Address too long').optional().nullable(),
+
+  lineItems: z.array(lineItemSchema).min(1, 'At least one line item is required').max(100, 'Too many line items').optional()
+}).refine(
+  (data) => {
+    if (data.deliveryDate && data.orderDate) {
+      const order = new Date(data.orderDate)
+      const delivery = new Date(data.deliveryDate)
+      return delivery >= order
+    }
+    return true
+  },
+  {
+    message: 'Delivery date must be on or after order date',
+    path: ['deliveryDate']
+  }
+)
+
+// Organization profile update schema
+export const updateOrganizationSchema = z.object({
+  name: z.string().min(1, 'Organization name is required').max(200, 'Name too long').optional(),
+  companyRegistrationNumber: z.string().max(50, 'Registration number too long').optional().nullable(),
+  vatNumber: z.string().max(50, 'VAT number too long').optional().nullable(),
+  addressLine1: z.string().max(200, 'Address line too long').optional().nullable(),
+  addressLine2: z.string().max(200, 'Address line too long').optional().nullable(),
+  city: z.string().max(100, 'City too long').optional().nullable(),
+  region: z.string().max(100, 'Region too long').optional().nullable(),
+  postcode: z.string().max(20, 'Postcode too long').optional().nullable(),
+  country: z.string().max(100, 'Country too long').optional().nullable(),
+  phone: z.string().max(50, 'Phone number too long').optional().nullable(),
+  email: z.string().email('Invalid email').optional().nullable(),
+  website: z.string().url('Invalid URL').optional().nullable()
+})
+
+// Contact sync schema (for FreeAgent integration)
+export const contactSyncSchema = z.object({
+  freeAgentId: z.string().min(1, 'FreeAgent ID is required'),
+  name: z.string().min(1, 'Name is required').max(200, 'Name too long'),
+  email: z.string().email('Invalid email').optional().nullable(),
+  phone: z.string().max(50, 'Phone number too long').optional().nullable(),
+  address: z.string().max(500, 'Address too long').optional().nullable(),
+  isActive: z.boolean().optional().default(true)
+})
+
+// Organization creation schema
+export const createOrganizationSchema = z.object({
+  name: z.string().min(1, 'Organization name is required').max(200, 'Name too long'),
+  slug: z.string()
+    .min(3, 'Slug must be at least 3 characters')
+    .max(50, 'Slug must be at most 50 characters')
+    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
+})
+
+/**
+ * Helper function to validate request body and return formatted errors
+ */
+export function validateRequestBody<T>(schema: z.ZodSchema<T>, body: unknown) {
+  const result = schema.safeParse(body)
+
+  if (!result.success) {
+    const errors = result.error.errors.map(err => ({
+      field: err.path.join('.'),
+      message: err.message
+    }))
+
+    return {
+      success: false as const,
+      errors
+    }
+  }
+
+  return {
+    success: true as const,
+    data: result.data
+  }
+}

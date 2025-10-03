@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { createOrganizationSchema, validateRequestBody } from '@/lib/validations'
 
 // POST /api/organizations - Create a new organization and assign user to it
 export async function POST(request: Request) {
@@ -13,19 +14,17 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, slug } = body
 
-    if (!name || !slug) {
-      return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 })
+    // Validate request body
+    const validation = validateRequestBody(createOrganizationSchema, body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.errors },
+        { status: 400 }
+      )
     }
 
-    // Validate slug format (lowercase alphanumeric and hyphens, 3-50 characters)
-    const slugPattern = /^[a-z0-9-]{3,50}$/
-    if (!slugPattern.test(slug)) {
-      return NextResponse.json({
-        error: 'Slug must be 3-50 characters, lowercase letters, numbers, and hyphens only'
-      }, { status: 400 })
-    }
+    const { name, slug } = validation.data
 
     // Check if slug already exists
     const existingOrg = await prisma.organization.findUnique({

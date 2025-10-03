@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { generatePONumber } from '@/lib/counter-helpers'
+import { createPurchaseOrderSchema, validateRequestBody } from '@/lib/validations'
 
 // GET /api/purchase-orders - List all purchase orders for user's organization
 export async function GET(request: Request) {
@@ -75,20 +76,24 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { lineItems, ...poData } = body
+
+    // Validate request body
+    const validation = validateRequestBody(createPurchaseOrderSchema, body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.errors },
+        { status: 400 }
+      )
+    }
+
+    const { lineItems, ...poData } = validation.data
 
     // Generate PO number if not provided (atomic, race-condition safe)
     if (!poData.poNumber) {
       poData.poNumber = await generatePONumber(dbUser.organizationId)
     }
 
-    // Convert date strings to ISO DateTime
-    if (poData.orderDate) {
-      poData.orderDate = new Date(poData.orderDate).toISOString()
-    }
-    if (poData.deliveryDate) {
-      poData.deliveryDate = new Date(poData.deliveryDate).toISOString()
-    }
+    // Date conversion is now handled by Zod validation schema
 
     // Calculate total from line items
     const totalAmount = lineItems.reduce((sum: number, item: any) => {

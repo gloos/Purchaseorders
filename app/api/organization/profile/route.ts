@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
+import { updateOrganizationSchema, validateRequestBody } from '@/lib/validations'
 
 export async function GET(request: NextRequest) {
   try {
@@ -54,24 +55,19 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json()
 
+    // Validate request body
+    const validation = validateRequestBody(updateOrganizationSchema, body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.errors },
+        { status: 400 }
+      )
+    }
+
     // Update organization profile
     const updatedOrganization = await prisma.organization.update({
       where: { id: organizationId },
-      data: {
-        name: body.name,
-        companyRegistrationNumber: body.companyRegistrationNumber,
-        vatNumber: body.vatNumber,
-        addressLine1: body.addressLine1,
-        addressLine2: body.addressLine2,
-        city: body.city,
-        region: body.region,
-        postcode: body.postcode,
-        country: body.country,
-        phone: body.phone,
-        email: body.email,
-        website: body.website,
-        logoUrl: body.logoUrl
-      }
+      data: validation.data
     })
 
     return NextResponse.json({

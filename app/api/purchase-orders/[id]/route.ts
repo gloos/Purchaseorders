@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { updatePurchaseOrderSchema, validateRequestBody } from '@/lib/validations'
 
 // GET /api/purchase-orders/[id] - Get a single purchase order
 export async function GET(
@@ -94,15 +95,19 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { lineItems, ...poData } = body
 
-    // Convert date strings to ISO DateTime
-    if (poData.orderDate) {
-      poData.orderDate = new Date(poData.orderDate).toISOString()
+    // Validate request body
+    const validation = validateRequestBody(updatePurchaseOrderSchema, body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.errors },
+        { status: 400 }
+      )
     }
-    if (poData.deliveryDate) {
-      poData.deliveryDate = new Date(poData.deliveryDate).toISOString()
-    }
+
+    const { lineItems, ...poData } = validation.data
+
+    // Date conversion is now handled by Zod validation schema
 
     // If line items are provided, recalculate total
     let totalAmount = poData.totalAmount
