@@ -10,25 +10,17 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { getUserAndOrgOrThrow } = await import('@/lib/auth-helpers')
+    const { user, organizationId } = await getUserAndOrgOrThrow()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id }
-    })
-
-    if (!dbUser?.organizationId) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 400 })
-    }
+    // Check permission to view POs
+    const { requirePermission } = await import('@/lib/rbac')
+    requirePermission(user.role, 'canViewPO')
 
     const purchaseOrder = await prisma.purchaseOrder.findFirst({
       where: {
         id: params.id,
-        organizationId: dbUser.organizationId
+        organizationId
       },
       include: {
         lineItems: true,
@@ -55,6 +47,23 @@ export async function GET(
     return NextResponse.json(purchaseOrder)
   } catch (error) {
     console.error('Error fetching purchase order:', error)
+
+    // Import AuthorizationError
+    const { AuthorizationError } = await import('@/lib/rbac')
+
+    if (error instanceof AuthorizationError) {
+      return NextResponse.json({ error: error.message }, { status: 403 })
+    }
+
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch purchase order' },
       { status: 500 }
@@ -68,26 +77,18 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { getUserAndOrgOrThrow } = await import('@/lib/auth-helpers')
+    const { user, organizationId } = await getUserAndOrgOrThrow()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id }
-    })
-
-    if (!dbUser?.organizationId) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 400 })
-    }
+    // Check permission to edit POs
+    const { requirePermission } = await import('@/lib/rbac')
+    requirePermission(user.role, 'canEditPO')
 
     // Verify the PO belongs to user's organization
     const existingPO = await prisma.purchaseOrder.findFirst({
       where: {
         id: params.id,
-        organizationId: dbUser.organizationId
+        organizationId
       }
     })
 
@@ -185,6 +186,23 @@ export async function PATCH(
     return NextResponse.json(purchaseOrder)
   } catch (error) {
     console.error('Error updating purchase order:', error)
+
+    // Import AuthorizationError
+    const { AuthorizationError } = await import('@/lib/rbac')
+
+    if (error instanceof AuthorizationError) {
+      return NextResponse.json({ error: error.message }, { status: 403 })
+    }
+
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
+
     return NextResponse.json(
       { error: 'Failed to update purchase order' },
       { status: 500 }
@@ -198,26 +216,18 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { getUserAndOrgOrThrow } = await import('@/lib/auth-helpers')
+    const { user, organizationId } = await getUserAndOrgOrThrow()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id }
-    })
-
-    if (!dbUser?.organizationId) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 400 })
-    }
+    // Check permission to delete POs
+    const { requirePermission } = await import('@/lib/rbac')
+    requirePermission(user.role, 'canDeletePO')
 
     // Verify the PO belongs to user's organization
     const existingPO = await prisma.purchaseOrder.findFirst({
       where: {
         id: params.id,
-        organizationId: dbUser.organizationId
+        organizationId
       }
     })
 
@@ -232,6 +242,23 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting purchase order:', error)
+
+    // Import AuthorizationError
+    const { AuthorizationError } = await import('@/lib/rbac')
+
+    if (error instanceof AuthorizationError) {
+      return NextResponse.json({ error: error.message }, { status: 403 })
+    }
+
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
+
     return NextResponse.json(
       { error: 'Failed to delete purchase order' },
       { status: 500 }

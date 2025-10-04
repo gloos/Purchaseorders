@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { Navbar } from '@/components/navbar'
+import { useUser } from '@/lib/hooks/use-user'
 
 type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'CANCELLED'
 
@@ -66,6 +67,7 @@ const statusLabels: Record<POStatus, string> = {
 }
 
 export default function PurchaseOrderDetailPage() {
+  const { hasPermission } = useUser()
   const params = useParams()
   const router = useRouter()
   const [po, setPo] = useState<PurchaseOrder | null>(null)
@@ -180,36 +182,44 @@ export default function PurchaseOrderDetailPage() {
             <p className="text-slate-600 dark:text-slate-400 mt-1">{po.title}</p>
           </div>
           <div className="flex gap-2">
-            <a
-              href={`/api/purchase-orders/${po.id}/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-              title="Download PDF"
-            >
-              Download PDF
-            </a>
-            <button
-              onClick={handleSendEmail}
-              disabled={sending || !po.supplierEmail}
-              className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title={!po.supplierEmail ? 'Supplier email required' : 'Send purchase order to supplier'}
-            >
-              {sending ? 'Sending...' : 'Send Email'}
-            </button>
-            <Link
-              href={`/purchase-orders/${po.id}/edit`}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Edit
-            </Link>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {deleting ? 'Deleting...' : 'Delete'}
-            </button>
+            {hasPermission('canViewPO') && (
+              <a
+                href={`/api/purchase-orders/${po.id}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                title="Download PDF"
+              >
+                Download PDF
+              </a>
+            )}
+            {hasPermission('canSendPO') && (
+              <button
+                onClick={handleSendEmail}
+                disabled={sending || !po.supplierEmail}
+                className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!po.supplierEmail ? 'Supplier email required' : 'Send purchase order to supplier'}
+              >
+                {sending ? 'Sending...' : 'Send Email'}
+              </button>
+            )}
+            {hasPermission('canEditPO') && (
+              <Link
+                href={`/purchase-orders/${po.id}/edit`}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Edit
+              </Link>
+            )}
+            {hasPermission('canDeletePO') && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
           </div>
         </div>
       </div>

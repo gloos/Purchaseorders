@@ -61,20 +61,12 @@ export async function GET(request: Request) {
 // POST /api/purchase-orders - Create a new purchase order
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { getUserAndOrgOrThrow } = await import('@/lib/auth-helpers')
+    const { user, organizationId } = await getUserAndOrgOrThrow()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id }
-    })
-
-    if (!dbUser?.organizationId) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 400 })
-    }
+    // Check permission to create POs
+    const { requirePermission } = await import('@/lib/rbac')
+    requirePermission(user.role, 'canCreatePO')
 
     const body = await request.json()
 
@@ -91,7 +83,7 @@ export async function POST(request: Request) {
 
     // Generate PO number if not provided (atomic, race-condition safe)
     if (!poData.poNumber) {
-      poData.poNumber = await generatePONumber(dbUser.organizationId)
+      poData.poNumber = await generatePONumber(organizationId)
     }
 
     // Date conversion is now handled by Zod validation schema
@@ -107,7 +99,7 @@ export async function POST(request: Request) {
         subtotalAmount,
         taxAmount,
         totalAmount,
-        organizationId: dbUser.organizationId,
+        organizationId,
         createdById: user.id,
         lineItems: {
           create: lineItems.map((item: any) => ({
@@ -134,6 +126,23 @@ export async function POST(request: Request) {
     return NextResponse.json(purchaseOrder, { status: 201 })
   } catch (error) {
     console.error('Error creating purchase order:', error)
+
+    // Import AuthorizationError
+    const { AuthorizationError } = await import('@/lib/rbac')
+
+    if (error instanceof AuthorizationError) {
+      return NextResponse.json({ error: error.message }, { status: 403 })
+    }
+
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'No organization found') {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+    }
+
     return NextResponse.json(
       { error: 'Failed to create purchase order' },
       { status: 500 }
