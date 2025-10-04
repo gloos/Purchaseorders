@@ -66,6 +66,7 @@ model Organization {
   purchaseOrders PurchaseOrder[]
   contacts       Contact[]
   counters       Counter[]
+  taxRates       TaxRate[]
 
   @@map("organizations")
 }
@@ -92,6 +93,30 @@ model Contact {
   @@index([freeAgentId])
 }
 
+// Tax Rate model - configurable tax rates per organization
+model TaxRate {
+  id             String    @id @default(uuid())
+  name           String    // e.g., "UK VAT Standard Rate", "US Sales Tax - California"
+  taxType        TaxType   @default(VAT)
+  rate           Decimal   @db.Decimal(5, 2) // Percentage (e.g., 20.00 for 20%)
+  description    String?
+  region         String?   // Optional region/state for regional taxes
+  isDefault      Boolean   @default(false) // Default tax rate for new POs
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchaseOrders PurchaseOrder[]
+
+  @@map("tax_rates")
+  @@index([organizationId])
+  @@index([organizationId, isDefault])
+  @@index([organizationId, isActive])
+}
+
 // User Role enum - defines access levels within an organization
 enum UserRole {
   ADMIN    // Full access: manage users, settings, all POs
@@ -116,6 +141,15 @@ enum TaxMode {
   NONE       // No tax applied
 }
 
+// Tax Type enum - different types of taxes
+enum TaxType {
+  VAT          // Value Added Tax (EU, UK, etc.)
+  GST          // Goods and Services Tax (Canada, Australia, India, etc.)
+  SALES_TAX    // Sales Tax (US states, etc.)
+  CONSUMPTION  // Consumption Tax (Japan, etc.)
+  CUSTOM       // Custom/Other tax types
+}
+
 // Purchase Order model
 model PurchaseOrder {
   id             String    @id @default(uuid())
@@ -127,10 +161,14 @@ model PurchaseOrder {
   // Financial fields
   subtotalAmount Decimal   @default(0) @db.Decimal(10, 2) // Amount before tax
   taxMode        TaxMode   @default(EXCLUSIVE) // How tax is calculated
-  taxRate        Decimal   @default(0) @db.Decimal(5, 2) // Tax percentage (e.g., 20.00 for 20%)
+  taxRate        Decimal   @default(0) @db.Decimal(5, 2) // Tax percentage (e.g., 20.00 for 20%) - kept for backward compatibility
   taxAmount      Decimal   @default(0) @db.Decimal(10, 2) // Calculated tax amount
   totalAmount    Decimal   @db.Decimal(10, 2) // Final amount (subtotal + tax for EXCLUSIVE, or subtotal for INCLUSIVE/NONE)
   currency       String    @default("GBP")
+
+  // Tax Rate relation (optional - if null, uses taxRate field above)
+  taxRateId      String?
+  taxRateConfig  TaxRate?  @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
 
   orderDate      DateTime  @default(now())
   deliveryDate   DateTime?
