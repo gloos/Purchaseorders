@@ -21,10 +21,20 @@ interface Contact {
   address?: string | null
 }
 
+interface TaxRate {
+  id: string
+  name: string
+  rate: number
+  taxType: string
+  isDefault: boolean
+  isActive: boolean
+}
+
 export default function NewPurchaseOrderPage() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [contacts, setContacts] = useState<Contact[]>([])
+  const [taxRates, setTaxRates] = useState<TaxRate[]>([])
   const [selectedContactId, setSelectedContactId] = useState('')
   const [formData, setFormData] = useState({
     title: '',
@@ -32,6 +42,7 @@ export default function NewPurchaseOrderPage() {
     status: 'DRAFT',
     currency: 'GBP',
     taxMode: 'EXCLUSIVE',
+    taxRateId: '',
     taxRate: 0,
     orderDate: new Date().toISOString().split('T')[0],
     deliveryDate: '',
@@ -48,6 +59,7 @@ export default function NewPurchaseOrderPage() {
 
   useEffect(() => {
     fetchContacts()
+    fetchTaxRates()
   }, [])
 
   const fetchContacts = async () => {
@@ -59,6 +71,28 @@ export default function NewPurchaseOrderPage() {
       }
     } catch (error) {
       console.error('Error fetching contacts:', error)
+    }
+  }
+
+  const fetchTaxRates = async () => {
+    try {
+      const response = await fetch('/api/tax-rates')
+      if (response.ok) {
+        const data = await response.json()
+        setTaxRates(data.filter((rate: TaxRate) => rate.isActive))
+
+        // Set default tax rate if available
+        const defaultRate = data.find((rate: TaxRate) => rate.isDefault && rate.isActive)
+        if (defaultRate) {
+          setFormData(prev => ({
+            ...prev,
+            taxRateId: defaultRate.id,
+            taxRate: defaultRate.rate
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching tax rates:', error)
     }
   }
 
@@ -85,6 +119,26 @@ export default function NewPurchaseOrderPage() {
         supplierEmail: contact.email || '',
         supplierPhone: contact.phone || '',
         supplierAddress: contact.address || ''
+      })
+    }
+  }
+
+  const handleTaxRateSelect = (taxRateId: string) => {
+    if (!taxRateId) {
+      setFormData({
+        ...formData,
+        taxRateId: '',
+        taxRate: 0
+      })
+      return
+    }
+
+    const selectedRate = taxRates.find(r => r.id === taxRateId)
+    if (selectedRate) {
+      setFormData({
+        ...formData,
+        taxRateId: selectedRate.id,
+        taxRate: selectedRate.rate
       })
     }
   }
@@ -265,19 +319,32 @@ export default function NewPurchaseOrderPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Tax Rate (%)
+                Tax Rate {formData.taxMode !== 'NONE' && '*'}
               </label>
-              <input
-                type="number"
-                name="taxRate"
-                value={formData.taxRate}
-                onChange={handleChange}
-                min="0"
-                max="100"
-                step="0.01"
+              <select
+                value={formData.taxRateId}
+                onChange={(e) => handleTaxRateSelect(e.target.value)}
                 disabled={formData.taxMode === 'NONE'}
+                required={formData.taxMode !== 'NONE'}
                 className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              />
+              >
+                <option value="">-- Select tax rate --</option>
+                {taxRates.map((rate) => (
+                  <option key={rate.id} value={rate.id}>
+                    {rate.name} ({rate.rate}%)
+                  </option>
+                ))}
+              </select>
+              {formData.taxRateId && formData.taxMode !== 'NONE' && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Tax rate: {formData.taxRate}%
+                </p>
+              )}
+              {taxRates.length === 0 && formData.taxMode !== 'NONE' && (
+                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                  No tax rates configured. <Link href="/settings/tax-rates" className="underline">Add tax rates</Link>
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">

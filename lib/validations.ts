@@ -26,6 +26,7 @@ export const createPurchaseOrderSchema = z.object({
   // Tax configuration
   taxMode: z.nativeEnum(TaxMode).optional().default('EXCLUSIVE' as TaxMode),
   taxRate: z.number().min(0, 'Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%').optional().default(0),
+  taxRateId: z.string().optional().nullable(),
 
   orderDate: z.string().optional().transform((val) => val ? new Date(val).toISOString() : new Date().toISOString()),
   deliveryDate: z.string().optional().nullable().transform((val) => val ? new Date(val).toISOString() : null),
@@ -64,6 +65,7 @@ export const updatePurchaseOrderSchema = z.object({
   // Tax configuration
   taxMode: z.nativeEnum(TaxMode).optional(),
   taxRate: z.number().min(0, 'Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%').optional(),
+  taxRateId: z.string().optional().nullable(),
 
   orderDate: z.string().optional().transform((val) => val ? new Date(val).toISOString() : undefined),
   deliveryDate: z.string().optional().nullable().transform((val) => val ? new Date(val).toISOString() : null),

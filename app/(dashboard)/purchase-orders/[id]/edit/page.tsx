@@ -21,6 +21,15 @@ interface Contact {
   address?: string | null
 }
 
+interface TaxRate {
+  id: string
+  name: string
+  rate: number
+  taxType: string
+  isDefault: boolean
+  isActive: boolean
+}
+
 interface PurchaseOrder {
   id: string
   poNumber: string
@@ -50,12 +59,16 @@ export default function EditPurchaseOrderPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [contacts, setContacts] = useState<Contact[]>([])
+  const [taxRates, setTaxRates] = useState<TaxRate[]>([])
   const [selectedContactId, setSelectedContactId] = useState('')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     status: 'DRAFT',
     currency: 'GBP',
+    taxMode: 'EXCLUSIVE',
+    taxRateId: '',
+    taxRate: 0,
     orderDate: '',
     deliveryDate: '',
     supplierName: '',
@@ -69,6 +82,7 @@ export default function EditPurchaseOrderPage() {
 
   useEffect(() => {
     fetchContacts()
+    fetchTaxRates()
     if (params.id) {
       fetchPurchaseOrder()
     }
@@ -83,6 +97,18 @@ export default function EditPurchaseOrderPage() {
       }
     } catch (error) {
       console.error('Error fetching contacts:', error)
+    }
+  }
+
+  const fetchTaxRates = async () => {
+    try {
+      const response = await fetch('/api/tax-rates')
+      if (response.ok) {
+        const data = await response.json()
+        setTaxRates(data.filter((rate: TaxRate) => rate.isActive))
+      }
+    } catch (error) {
+      console.error('Error fetching tax rates:', error)
     }
   }
 
@@ -113,17 +139,40 @@ export default function EditPurchaseOrderPage() {
     }
   }
 
+  const handleTaxRateSelect = (taxRateId: string) => {
+    if (!taxRateId) {
+      setFormData({
+        ...formData,
+        taxRateId: '',
+        taxRate: 0
+      })
+      return
+    }
+
+    const selectedRate = taxRates.find(r => r.id === taxRateId)
+    if (selectedRate) {
+      setFormData({
+        ...formData,
+        taxRateId: selectedRate.id,
+        taxRate: selectedRate.rate
+      })
+    }
+  }
+
   const fetchPurchaseOrder = async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/purchase-orders/${params.id}`)
       if (response.ok) {
-        const data: PurchaseOrder = await response.json()
+        const data: any = await response.json()
         setFormData({
           title: data.title,
           description: data.description || '',
           status: data.status,
           currency: data.currency,
+          taxMode: data.taxMode || 'EXCLUSIVE',
+          taxRateId: data.taxRateId || '',
+          taxRate: data.taxRate ? parseFloat(data.taxRate) : 0,
           orderDate: data.orderDate.split('T')[0],
           deliveryDate: data.deliveryDate ? data.deliveryDate.split('T')[0] : '',
           supplierName: data.supplierName,
@@ -132,7 +181,7 @@ export default function EditPurchaseOrderPage() {
           supplierAddress: data.supplierAddress || '',
           notes: data.notes || ''
         })
-        setLineItems(data.lineItems.map(item => ({
+        setLineItems(data.lineItems.map((item: any) => ({
           id: item.id,
           description: item.description,
           quantity: item.quantity,
@@ -174,10 +223,30 @@ export default function EditPurchaseOrderPage() {
     }
   }
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     return lineItems.reduce((sum, item) => {
       return sum + (item.quantity * parseFloat(item.unitPrice || '0'))
     }, 0)
+  }
+
+  const calculateTax = () => {
+    const subtotal = calculateSubtotal()
+    const taxRate = parseFloat(String(formData.taxRate || 0))
+
+    if (formData.taxMode === 'NONE' || taxRate === 0) {
+      return { subtotal, tax: 0, total: subtotal }
+    } else if (formData.taxMode === 'EXCLUSIVE') {
+      // Tax added on top
+      const tax = (subtotal * taxRate) / 100
+      return { subtotal, tax, total: subtotal + tax }
+    } else if (formData.taxMode === 'INCLUSIVE') {
+      // Tax already included in prices
+      const total = subtotal
+      const subtotalBeforeTax = total / (1 + taxRate / 100)
+      const tax = total - subtotalBeforeTax
+      return { subtotal: subtotalBeforeTax, tax, total }
+    }
+    return { subtotal, tax: 0, total: subtotal }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -299,6 +368,51 @@ export default function EditPurchaseOrderPage() {
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Tax Mode *
+              </label>
+              <select
+                name="taxMode"
+                value={formData.taxMode}
+                onChange={handleChange}
+                required
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              >
+                <option value="NONE">No Tax</option>
+                <option value="EXCLUSIVE">Tax Exclusive (added on top)</option>
+                <option value="INCLUSIVE">Tax Inclusive (included in prices)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Tax Rate {formData.taxMode !== 'NONE' && '*'}
+              </label>
+              <select
+                value={formData.taxRateId}
+                onChange={(e) => handleTaxRateSelect(e.target.value)}
+                disabled={formData.taxMode === 'NONE'}
+                required={formData.taxMode !== 'NONE'}
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="">-- Select tax rate --</option>
+                {taxRates.map((rate) => (
+                  <option key={rate.id} value={rate.id}>
+                    {rate.name} ({rate.rate}%)
+                  </option>
+                ))}
+              </select>
+              {formData.taxRateId && formData.taxMode !== 'NONE' && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Tax rate: {formData.taxRate}%
+                </p>
+              )}
+              {taxRates.length === 0 && formData.taxMode !== 'NONE' && (
+                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                  No tax rates configured. <Link href="/settings/tax-rates" className="underline">Add tax rates</Link>
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -494,10 +608,18 @@ export default function EditPurchaseOrderPage() {
             ))}
           </div>
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <div className="text-right">
-              <span className="text-lg font-semibold text-slate-900 dark:text-white">
-                Total Amount: {formData.currency} {calculateTotal().toFixed(2)}
-              </span>
+            <div className="space-y-2 text-right">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                <span>Subtotal: {formData.currency} {calculateTax().subtotal.toFixed(2)}</span>
+              </div>
+              {formData.taxMode !== 'NONE' && parseFloat(String(formData.taxRate || 0)) > 0 && (
+                <div className="text-sm text-slate-600 dark:text-slate-400">
+                  <span>Tax ({formData.taxRate}% {formData.taxMode === 'INCLUSIVE' ? 'incl.' : 'excl.'}): {formData.currency} {calculateTax().tax.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="text-lg font-semibold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-700">
+                <span>Total Amount: {formData.currency} {calculateTax().total.toFixed(2)}</span>
+              </div>
             </div>
           </div>
         </div>
