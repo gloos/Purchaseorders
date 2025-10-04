@@ -104,9 +104,9 @@ export function Navbar() {
             >
               Profile
             </Link>
-            {hasPermission('canManageUsers') && (
+            {(hasPermission('canManageUsers') || hasPermission('canManageOrganization')) && (
               <Link
-                href="/settings/users"
+                href="/settings"
                 className={`text-sm ${
                   isActive('/settings')
                     ? 'text-blue-600 dark:text-blue-400 font-medium'
