@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { useUser } from '@/lib/hooks/use-user'
 
 interface CompanyProfile {
   name: string
@@ -12,6 +13,7 @@ interface CompanyProfile {
 
 export function Navbar() {
   const pathname = usePathname()
+  const { hasPermission } = useUser()
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
 
   useEffect(() => {
@@ -102,6 +104,18 @@ export function Navbar() {
             >
               Profile
             </Link>
+            {hasPermission('canManageUsers') && (
+              <Link
+                href="/settings/users"
+                className={`text-sm ${
+                  isActive('/settings')
+                    ? 'text-blue-600 dark:text-blue-400 font-medium'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Settings
+              </Link>
+            )}
           </div>
           <div className="flex items-center space-x-4">
             <button
