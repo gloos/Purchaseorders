@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
 
-type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'CANCELLED'
+type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'INVOICED' | 'CANCELLED'
 
 interface PurchaseOrder {
   id: string
@@ -29,6 +29,7 @@ const statusColors: Record<POStatus, string> = {
   APPROVED: 'bg-green-100 text-green-800',
   SENT: 'bg-blue-100 text-blue-800',
   RECEIVED: 'bg-purple-100 text-purple-800',
+  INVOICED: 'bg-teal-100 text-teal-800',
   CANCELLED: 'bg-red-100 text-red-800'
 }
 
@@ -38,6 +39,7 @@ const statusLabels: Record<POStatus, string> = {
   APPROVED: 'Approved',
   SENT: 'Sent',
   RECEIVED: 'Received',
+  INVOICED: 'Invoiced',
   CANCELLED: 'Cancelled'
 }
 

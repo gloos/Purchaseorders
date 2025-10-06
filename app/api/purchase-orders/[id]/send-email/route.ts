@@ -7,6 +7,7 @@ import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
 import { renderToStream } from '@react-pdf/renderer'
 import { PurchaseOrderPDF } from '@/lib/pdf/templates/purchase-order-pdf'
 import { checkRateLimit, getIdentifier, addRateLimitHeaders } from '@/lib/rate-limit'
+import { randomUUID } from 'crypto'
 
 export async function POST(
   request: NextRequest,
@@ -89,6 +90,22 @@ export async function POST(
       organization.country
     ].filter(Boolean).join(', ')
 
+    // Generate invoice upload token if not already present
+    let invoiceUploadToken = purchaseOrder.invoiceUploadToken
+    if (!invoiceUploadToken || !purchaseOrder.invoiceUploadTokenExpiresAt) {
+      invoiceUploadToken = randomUUID()
+      const expiresAt = new Date()
+      expiresAt.setDate(expiresAt.getDate() + 90) // 90-day expiry
+
+      await prisma.purchaseOrder.update({
+        where: { id: purchaseOrder.id },
+        data: {
+          invoiceUploadToken,
+          invoiceUploadTokenExpiresAt: expiresAt
+        }
+      })
+    }
+
     // Render the email template
     const emailHtml = await renderAsync(
       PurchaseOrderEmail({
@@ -113,6 +130,8 @@ export async function POST(
         companyVatNumber: organization.vatNumber || undefined,
         companyRegistrationNumber: organization.companyRegistrationNumber || undefined,
         companyLogoUrl: organization.logoUrl || undefined,
+        // Invoice upload token
+        invoiceUploadToken,
       })
     )
 

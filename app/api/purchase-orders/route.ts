@@ -81,6 +81,15 @@ export async function POST(request: Request) {
 
     const { lineItems, ...poData } = validation.data
 
+    // Safety check for lineItems
+    if (!lineItems || !Array.isArray(lineItems) || lineItems.length === 0) {
+      console.error('Line items validation issue:', { lineItems, body })
+      return NextResponse.json(
+        { error: 'Line items are required. Please add at least one item.' },
+        { status: 400 }
+      )
+    }
+
     // Generate PO number if not provided (atomic, race-condition safe)
     if (!poData.poNumber) {
       poData.poNumber = await generatePONumber(organizationId)

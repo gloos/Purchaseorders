@@ -27,6 +27,8 @@ interface PurchaseOrderEmailProps {
   companyVatNumber?: string
   companyRegistrationNumber?: string
   companyLogoUrl?: string
+  // Invoice upload
+  invoiceUploadToken?: string
 }
 
 export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
@@ -50,6 +52,7 @@ export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
   companyVatNumber,
   companyRegistrationNumber,
   companyLogoUrl,
+  invoiceUploadToken,
 }) => {
   const getCurrencySymbol = (curr: string): string => {
     const symbols: Record<string, string> = {
@@ -164,6 +167,33 @@ export const PurchaseOrderEmail: React.FC<PurchaseOrderEmailProps> = ({
           <div style={{ marginBottom: '20px', backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
             <h3 style={{ color: '#1e293b', fontSize: '14px', marginTop: '0' }}>Terms & Conditions</h3>
             <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{terms}</p>
+          </div>
+        )}
+
+        {invoiceUploadToken && (
+          <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#eef2ff', borderRadius: '8px', textAlign: 'center' }}>
+            <h3 style={{ color: '#1e293b', marginTop: '0' }}>Submit Your Invoice</h3>
+            <p style={{ color: '#475569', marginBottom: '20px' }}>
+              Once you've fulfilled this purchase order, please submit your invoice using the secure link below.
+            </p>
+            <a
+              href={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invoice-upload?token=${invoiceUploadToken}`}
+              style={{
+                display: 'inline-block',
+                padding: '12px 24px',
+                backgroundColor: '#4f46e5',
+                color: '#ffffff',
+                textDecoration: 'none',
+                borderRadius: '5px',
+                fontWeight: 'bold',
+                fontSize: '16px'
+              }}
+            >
+              Upload Invoice
+            </a>
+            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '15px', marginBottom: '0' }}>
+              This link is unique to this purchase order and will expire in 90 days.
+            </p>
           </div>
         )}
 

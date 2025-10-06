@@ -11,7 +11,7 @@ export const lineItemSchema = z.object({
   description: z.string().min(1, 'Description is required').max(500, 'Description too long'),
   quantity: z.number().int().positive('Quantity must be positive'),
   unitPrice: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid price format').or(z.number().positive('Unit price must be positive')),
-  notes: z.string().max(1000, 'Notes too long').optional().nullable()
+  notes: z.string().max(1000, 'Notes too long').optional().nullable().transform(val => val === '' ? null : val)
 })
 
 // Purchase Order creation schema
@@ -19,24 +19,24 @@ export const createPurchaseOrderSchema = z.object({
   // Optional fields
   poNumber: z.string().max(50, 'PO number too long').optional(),
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  description: z.string().max(2000, 'Description too long').optional().nullable(),
+  description: z.string().max(2000, 'Description too long').optional().nullable().transform(val => val === '' ? null : val),
   status: z.nativeEnum(POStatus).optional().default('DRAFT' as POStatus),
   currency: z.string().length(3, 'Currency must be 3-letter code').default('GBP'),
 
   // Tax configuration
   taxMode: z.nativeEnum(TaxMode).optional().default('EXCLUSIVE' as TaxMode),
-  taxRate: z.number().min(0, 'Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%').optional().default(0),
+  taxRate: z.coerce.number().min(0, 'Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%').optional().default(0),
   taxRateId: z.string().optional().nullable(),
 
   orderDate: z.string().optional().transform((val) => val ? new Date(val).toISOString() : new Date().toISOString()),
   deliveryDate: z.string().optional().nullable().transform((val) => val ? new Date(val).toISOString() : null),
-  notes: z.string().max(2000, 'Notes too long').optional().nullable(),
+  notes: z.string().max(2000, 'Notes too long').optional().nullable().transform(val => val === '' ? null : val),
 
   // Supplier information - all required
   supplierName: z.string().min(1, 'Supplier name is required').max(200, 'Supplier name too long'),
-  supplierEmail: z.string().email('Invalid email').optional().nullable(),
-  supplierPhone: z.string().max(50, 'Phone number too long').optional().nullable(),
-  supplierAddress: z.string().max(500, 'Address too long').optional().nullable(),
+  supplierEmail: z.string().email('Invalid email').or(z.literal('')).optional().nullable().transform(val => val === '' ? null : val),
+  supplierPhone: z.string().max(50, 'Phone number too long').optional().nullable().transform(val => val === '' ? null : val),
+  supplierAddress: z.string().max(500, 'Address too long').optional().nullable().transform(val => val === '' ? null : val),
 
   // Line items - required, must have at least one
   lineItems: z.array(lineItemSchema).min(1, 'At least one line item is required').max(100, 'Too many line items')
@@ -59,22 +59,22 @@ export const createPurchaseOrderSchema = z.object({
 // Purchase Order update schema (all fields optional except lineItems if provided)
 export const updatePurchaseOrderSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long').optional(),
-  description: z.string().max(2000, 'Description too long').optional().nullable(),
+  description: z.string().max(2000, 'Description too long').optional().nullable().transform(val => val === '' ? null : val),
   status: z.nativeEnum(POStatus).optional(),
 
   // Tax configuration
   taxMode: z.nativeEnum(TaxMode).optional(),
-  taxRate: z.number().min(0, 'Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%').optional(),
+  taxRate: z.coerce.number().min(0, 'Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%').optional(),
   taxRateId: z.string().optional().nullable(),
 
   orderDate: z.string().optional().transform((val) => val ? new Date(val).toISOString() : undefined),
   deliveryDate: z.string().optional().nullable().transform((val) => val ? new Date(val).toISOString() : null),
-  notes: z.string().max(2000, 'Notes too long').optional().nullable(),
+  notes: z.string().max(2000, 'Notes too long').optional().nullable().transform(val => val === '' ? null : val),
 
   supplierName: z.string().min(1, 'Supplier name is required').max(200, 'Supplier name too long').optional(),
-  supplierEmail: z.string().email('Invalid email').optional().nullable(),
-  supplierPhone: z.string().max(50, 'Phone number too long').optional().nullable(),
-  supplierAddress: z.string().max(500, 'Address too long').optional().nullable(),
+  supplierEmail: z.string().email('Invalid email').or(z.literal('')).optional().nullable().transform(val => val === '' ? null : val),
+  supplierPhone: z.string().max(50, 'Phone number too long').optional().nullable().transform(val => val === '' ? null : val),
+  supplierAddress: z.string().max(500, 'Address too long').optional().nullable().transform(val => val === '' ? null : val),
 
   lineItems: z.array(lineItemSchema).min(1, 'At least one line item is required').max(100, 'Too many line items').optional()
 }).refine(
@@ -134,7 +134,18 @@ export function validateRequestBody<T>(schema: z.ZodSchema<T>, body: unknown) {
   const result = schema.safeParse(body)
 
   if (!result.success) {
-    const errors = result.error.errors.map(err => ({
+    // Access Zod v4 errors - they might be on result.error.issues or result.error directly
+    const zodErrors = result.error.issues || (result.error as any).errors || []
+
+    if (!Array.isArray(zodErrors) || zodErrors.length === 0) {
+      console.error('Unexpected Zod validation error structure:', result.error)
+      return {
+        success: false as const,
+        errors: [{ field: 'unknown', message: 'Validation failed with unexpected error structure' }]
+      }
+    }
+
+    const errors = zodErrors.map(err => ({
       field: err.path.join('.'),
       message: err.message
     }))

@@ -7,7 +7,7 @@ import { format } from 'date-fns'
 import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
 
-type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'CANCELLED'
+type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'INVOICED' | 'CANCELLED'
 
 interface LineItem {
   id: string
@@ -37,6 +37,9 @@ interface PurchaseOrder {
   supplierEmail?: string | null
   supplierPhone?: string | null
   supplierAddress?: string | null
+  invoiceUrl?: string | null
+  invoiceReceivedAt?: string | null
+  invoiceUploadTokenExpiresAt?: string | null
   createdAt: string
   createdBy: {
     name: string | null
@@ -54,6 +57,7 @@ const statusColors: Record<POStatus, string> = {
   APPROVED: 'bg-green-100 text-green-800',
   SENT: 'bg-blue-100 text-blue-800',
   RECEIVED: 'bg-purple-100 text-purple-800',
+  INVOICED: 'bg-teal-100 text-teal-800',
   CANCELLED: 'bg-red-100 text-red-800'
 }
 
@@ -63,6 +67,7 @@ const statusLabels: Record<POStatus, string> = {
   APPROVED: 'Approved',
   SENT: 'Sent',
   RECEIVED: 'Received',
+  INVOICED: 'Invoiced',
   CANCELLED: 'Cancelled'
 }
 
@@ -405,6 +410,75 @@ export default function PurchaseOrderDetailPage() {
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Organization</h2>
             <p className="text-sm text-slate-900 dark:text-white">{po.organization.name}</p>
           </div>
+
+          {/* Invoice Status */}
+          {(po.status === 'SENT' || po.status === 'INVOICED') && (
+            <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Invoice</h2>
+              {po.invoiceUrl && po.invoiceReceivedAt ? (
+                <div className="space-y-3">
+                  <div className="flex items-center text-green-600 dark:text-green-400 mb-2">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm font-medium">Invoice Uploaded</span>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">Received</dt>
+                    <dd className="mt-1 text-sm text-slate-900 dark:text-white">
+                      {format(new Date(po.invoiceReceivedAt), 'MMM d, yyyy h:mm a')}
+                    </dd>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`/api/purchase-orders/${po.id}/invoice`)
+                        if (response.ok) {
+                          const blob = await response.blob()
+                          const url = window.URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          a.download = `Invoice-${po.poNumber}.pdf`
+                          document.body.appendChild(a)
+                          a.click()
+                          window.URL.revokeObjectURL(url)
+                          document.body.removeChild(a)
+                        } else {
+                          alert('Failed to download invoice')
+                        }
+                      } catch (error) {
+                        console.error('Error downloading invoice:', error)
+                        alert('Failed to download invoice')
+                      }
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  >
+                    Download Invoice
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center text-yellow-600 dark:text-yellow-400 mb-2">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm font-medium">Pending Upload</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Supplier has been sent a secure link to upload their invoice.
+                  </p>
+                  {po.invoiceUploadTokenExpiresAt && (
+                    <div>
+                      <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">Link Expires</dt>
+                      <dd className="mt-1 text-sm text-slate-900 dark:text-white">
+                        {format(new Date(po.invoiceUploadTokenExpiresAt), 'MMM d, yyyy')}
+                      </dd>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       </div>

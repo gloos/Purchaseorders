@@ -131,6 +131,7 @@ enum POStatus {
   APPROVED
   SENT
   RECEIVED
+  INVOICED
   CANCELLED
 }
 
@@ -183,6 +184,12 @@ model PurchaseOrder {
   // FreeAgent integration
   freeAgentId    String?   @unique
   syncedAt       DateTime?
+
+  // Invoice upload fields
+  invoiceUploadToken          String?   @unique
+  invoiceUploadTokenExpiresAt DateTime?
+  invoiceUrl                  String?
+  invoiceReceivedAt           DateTime?
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
