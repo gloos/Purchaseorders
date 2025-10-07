@@ -1,15 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit, getIdentifier, addRateLimitHeaders } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting - prevent token brute-force attacks
+    const identifier = getIdentifier(request)
+    const rateLimit = await checkRateLimit('api', identifier)
+
+    const headers = new Headers()
+    addRateLimitHeaders(headers, rateLimit)
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers }
+      )
+    }
+
     const searchParams = request.nextUrl.searchParams
     const token = searchParams.get('token')
 
     if (!token) {
       return NextResponse.json(
         { error: 'Token is required' },
-        { status: 400 }
+        { status: 400, headers }
       )
     }
 
@@ -31,7 +46,7 @@ export async function GET(request: NextRequest) {
     if (!purchaseOrder) {
       return NextResponse.json(
         { error: 'Invalid token. This upload link is not valid.' },
-        { status: 404 }
+        { status: 404, headers }
       )
     }
 
@@ -44,7 +59,7 @@ export async function GET(request: NextRequest) {
             error: 'This upload link has expired. Please contact the sender for a new link.',
             expiredAt: purchaseOrder.invoiceUploadTokenExpiresAt.toISOString()
           },
-          { status: 410 }
+          { status: 410, headers }
         )
       }
     }
@@ -56,7 +71,7 @@ export async function GET(request: NextRequest) {
           error: 'An invoice has already been uploaded for this purchase order.',
           uploadedAt: purchaseOrder.invoiceReceivedAt?.toISOString()
         },
-        { status: 409 }
+        { status: 409, headers }
       )
     }
 
@@ -70,7 +85,7 @@ export async function GET(request: NextRequest) {
         currency: purchaseOrder.currency,
         expiresAt: purchaseOrder.invoiceUploadTokenExpiresAt?.toISOString()
       }
-    })
+    }, { headers })
 
   } catch (error) {
     console.error('Error validating token:', error)

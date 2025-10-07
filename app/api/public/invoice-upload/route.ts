@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit, getIdentifier, addRateLimitHeaders } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - prevent DoS attacks via file uploads
+    const identifier = getIdentifier(request)
+    const rateLimit = await checkRateLimit('api', identifier)
+
+    const headers = new Headers()
+    addRateLimitHeaders(headers, rateLimit)
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers }
+      )
+    }
+
     const searchParams = request.nextUrl.searchParams
     const token = searchParams.get('token')
 
     if (!token) {
       return NextResponse.json(
         { error: 'Token is required' },
-        { status: 400 }
+        { status: 400, headers }
       )
     }
 
@@ -29,7 +44,7 @@ export async function POST(request: NextRequest) {
     if (!purchaseOrder) {
       return NextResponse.json(
         { error: 'Invalid token. This upload link is not valid.' },
-        { status: 404 }
+        { status: 404, headers }
       )
     }
 
@@ -39,7 +54,7 @@ export async function POST(request: NextRequest) {
       if (now > purchaseOrder.invoiceUploadTokenExpiresAt) {
         return NextResponse.json(
           { error: 'This upload link has expired. Please contact the sender for a new link.' },
-          { status: 410 }
+          { status: 410, headers }
         )
       }
     }
@@ -48,7 +63,7 @@ export async function POST(request: NextRequest) {
     if (purchaseOrder.invoiceUrl) {
       return NextResponse.json(
         { error: 'An invoice has already been uploaded for this purchase order.' },
-        { status: 409 }
+        { status: 409, headers }
       )
     }
 
@@ -59,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json(
         { error: 'No file provided' },
-        { status: 400 }
+        { status: 400, headers }
       )
     }
 
@@ -68,7 +83,7 @@ export async function POST(request: NextRequest) {
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         { error: 'Invalid file type. Only PDF, PNG, and JPG files are allowed.' },
-        { status: 400 }
+        { status: 400, headers }
       )
     }
 
@@ -77,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (file.size > maxSize) {
       return NextResponse.json(
         { error: 'File too large. Maximum size is 10MB.' },
-        { status: 400 }
+        { status: 400, headers }
       )
     }
 
@@ -101,7 +116,7 @@ export async function POST(request: NextRequest) {
       console.error('Upload error:', uploadError)
       return NextResponse.json(
         { error: 'Failed to upload file. Please try again.' },
-        { status: 500 }
+        { status: 500, headers }
       )
     }
 
@@ -121,7 +136,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Invoice uploaded successfully',
       poNumber: purchaseOrder.poNumber
-    })
+    }, { headers })
 
   } catch (error) {
     console.error('Error uploading invoice:', error)
