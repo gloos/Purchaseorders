@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 
+// Force dynamic rendering - this page uses search params
+export const dynamic = 'force-dynamic'
+
 interface Contact {
   id: string
   freeAgentId: string
