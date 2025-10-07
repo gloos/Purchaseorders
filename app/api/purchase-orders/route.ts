@@ -98,6 +98,8 @@ export async function POST(request: Request) {
     // Date conversion is now handled by Zod validation schema
 
     // Calculate tax and totals using tax helper
+    // IMPORTANT: taxRate is snapshotted from the selected TaxRate at creation time
+    // This preserves accounting integrity - if the TaxRate is later modified, this PO remains unchanged
     const taxMode = poData.taxMode || 'EXCLUSIVE'
     const taxRate = poData.taxRate || 0
     const { subtotalAmount, taxAmount, totalAmount } = calculateTax(lineItems, taxMode, taxRate)

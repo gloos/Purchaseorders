@@ -118,6 +118,8 @@ export async function PATCH(
 
     if (lineItems) {
       // Tax settings from request or use existing PO values
+      // IMPORTANT: We use the snapshotted taxRate value, never fetching from TaxRate relationship
+      // This ensures accounting integrity - the PO preserves its original tax calculation
       const taxMode = poData.taxMode || existingPO.taxMode
       const taxRate = poData.taxRate !== undefined ? poData.taxRate : existingPO.taxRate
 
@@ -127,6 +129,7 @@ export async function PATCH(
       totalAmount = taxCalc.totalAmount
     } else if (poData.taxMode !== undefined || poData.taxRate !== undefined) {
       // Tax settings changed but line items not provided - need to recalculate from existing line items
+      // IMPORTANT: Still using snapshotted values, not the TaxRate relationship
       const existingLineItems = await prisma.pOLineItem.findMany({
         where: { purchaseOrderId: params.id }
       })
