@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { renderToStream } from '@react-pdf/renderer'
 import { PurchaseOrderPDF } from '@/lib/pdf/templates/purchase-order-pdf'
 import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
+import { createElement } from 'react'
 
 export async function GET(
-  request: NextRequest,
+  _request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -67,7 +68,7 @@ export async function GET(
 
     // Generate PDF
     const stream = await renderToStream(
-      PurchaseOrderPDF({
+      createElement(PurchaseOrderPDF, {
         poNumber: purchaseOrder.poNumber,
         supplierName: purchaseOrder.supplierName,
         supplierEmail: purchaseOrder.supplierEmail || undefined,
@@ -84,14 +85,13 @@ export async function GET(
         total,
         notes: purchaseOrder.notes || undefined,
         terms: undefined,
-        // Company information
         companyName: organization.name,
         companyAddress: companyAddress || undefined,
         companyPhone: organization.phone || undefined,
         companyEmail: organization.email || undefined,
         companyVatNumber: organization.vatNumber || undefined,
         companyRegistrationNumber: organization.companyRegistrationNumber || undefined,
-      })
+      }) as any
     )
 
     // Convert stream to buffer

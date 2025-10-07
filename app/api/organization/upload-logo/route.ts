@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('company-logos')
       .upload(fileName, file, {
         contentType: file.type,

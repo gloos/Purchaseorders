@@ -30,29 +30,6 @@ interface TaxRate {
   isActive: boolean
 }
 
-interface PurchaseOrder {
-  id: string
-  poNumber: string
-  title: string
-  description?: string | null
-  status: string
-  currency: string
-  orderDate: string
-  deliveryDate?: string | null
-  supplierName: string
-  supplierEmail?: string | null
-  supplierPhone?: string | null
-  supplierAddress?: string | null
-  notes?: string | null
-  lineItems: {
-    id: string
-    description: string
-    quantity: number
-    unitPrice: string
-    notes?: string | null
-  }[]
-}
-
 export default function EditPurchaseOrderPage() {
   const params = useParams()
   const router = useRouter()

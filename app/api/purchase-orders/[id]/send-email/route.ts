@@ -8,6 +8,7 @@ import { renderToStream } from '@react-pdf/renderer'
 import { PurchaseOrderPDF } from '@/lib/pdf/templates/purchase-order-pdf'
 import { checkRateLimit, getIdentifier, addRateLimitHeaders } from '@/lib/rate-limit'
 import { randomUUID } from 'crypto'
+import { createElement } from 'react'
 
 export async function POST(
   request: NextRequest,
@@ -108,7 +109,7 @@ export async function POST(
 
     // Render the email template
     const emailHtml = await renderAsync(
-      PurchaseOrderEmail({
+      createElement(PurchaseOrderEmail, {
         poNumber: purchaseOrder.poNumber,
         supplierName: purchaseOrder.supplierName,
         orderDate: purchaseOrder.orderDate.toISOString(),
@@ -132,7 +133,7 @@ export async function POST(
         companyLogoUrl: organization.logoUrl || undefined,
         // Invoice upload token
         invoiceUploadToken,
-      })
+      }) as any
     )
 
     // Generate plain text version
@@ -161,7 +162,7 @@ ${organization.email || ''}
 
     // Generate PDF attachment
     const pdfStream = await renderToStream(
-      PurchaseOrderPDF({
+      createElement(PurchaseOrderPDF, {
         poNumber: purchaseOrder.poNumber,
         supplierName: purchaseOrder.supplierName,
         supplierEmail: purchaseOrder.supplierEmail || undefined,
@@ -185,7 +186,7 @@ ${organization.email || ''}
         companyEmail: organization.email || undefined,
         companyVatNumber: organization.vatNumber || undefined,
         companyRegistrationNumber: organization.companyRegistrationNumber || undefined,
-      })
+      }) as any
     )
 
     // Convert PDF stream to buffer

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
 import { updateOrganizationSchema, validateRequestBody } from '@/lib/validations'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const { organizationId } = await getUserAndOrgOrThrow()
 

@@ -91,9 +91,7 @@ export async function POST(request: Request) {
     }
 
     // Generate PO number if not provided (atomic, race-condition safe)
-    if (!poData.poNumber) {
-      poData.poNumber = await generatePONumber(organizationId)
-    }
+    const poNumber = poData.poNumber || await generatePONumber(organizationId)
 
     // Date conversion is now handled by Zod validation schema
 
@@ -107,6 +105,7 @@ export async function POST(request: Request) {
     const purchaseOrder = await prisma.purchaseOrder.create({
       data: {
         ...poData,
+        poNumber,
         subtotalAmount,
         taxAmount,
         totalAmount,

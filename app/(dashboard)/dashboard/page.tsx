@@ -50,7 +50,6 @@ export default function DashboardPage() {
   const router = useRouter()
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
-  const [userEmail, setUserEmail] = useState('')
 
   useEffect(() => {
     fetchAnalytics()

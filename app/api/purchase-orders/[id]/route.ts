@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { updatePurchaseOrderSchema, validateRequestBody } from '@/lib/validations'
@@ -6,7 +5,7 @@ import { calculateTax } from '@/lib/tax-helpers'
 
 // GET /api/purchase-orders/[id] - Get a single purchase order
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -137,7 +136,14 @@ export async function PATCH(
       const taxMode = poData.taxMode || existingPO.taxMode
       const taxRate = poData.taxRate !== undefined ? poData.taxRate : existingPO.taxRate
 
-      const taxCalc = calculateTax(existingLineItems, taxMode, Number(taxRate))
+      const taxCalc = calculateTax(
+        existingLineItems.map(item => ({
+          ...item,
+          unitPrice: item.unitPrice.toString()
+        })),
+        taxMode,
+        Number(taxRate)
+      )
       subtotalAmount = taxCalc.subtotalAmount
       taxAmount = taxCalc.taxAmount
       totalAmount = taxCalc.totalAmount
@@ -215,7 +221,7 @@ export async function PATCH(
 
 // DELETE /api/purchase-orders/[id] - Delete a purchase order
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: { id: string } }
 ) {
   try {

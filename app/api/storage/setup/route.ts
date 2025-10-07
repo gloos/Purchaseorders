@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 // Admin client with service role key
@@ -13,7 +13,7 @@ const supabaseAdmin = createClient(
   }
 )
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Create company-logos bucket
     const { data: bucket, error: bucketError } = await supabaseAdmin.storage.createBucket('company-logos', {

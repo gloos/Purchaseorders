@@ -31,11 +31,9 @@ export interface FreeAgentContact {
 
 export class FreeAgentClient {
   private accessToken: string
-  private refreshToken?: string
 
-  constructor(accessToken: string, refreshToken?: string) {
+  constructor(accessToken: string, _refreshToken?: string) {
     this.accessToken = accessToken
-    this.refreshToken = refreshToken
   }
 
   // Generate OAuth authorization URL

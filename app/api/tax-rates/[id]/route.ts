@@ -101,7 +101,7 @@ export async function PATCH(
 
 // DELETE /api/tax-rates/[id] - Delete a tax rate
 export async function DELETE(
-  request: NextRequest,
+  _request: Request,
   { params }: { params: { id: string } }
 ) {
   try {

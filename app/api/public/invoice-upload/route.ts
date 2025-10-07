@@ -98,14 +98,13 @@ export async function POST(request: NextRequest) {
 
     // Create unique file name
     const timestamp = Date.now()
-    const fileExt = file.name.split('.').pop()
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
     const fileName = `${purchaseOrder.organizationId}/${purchaseOrder.id}-${timestamp}-${sanitizedFileName}`
 
     // Upload to Supabase Storage using admin client
     const supabaseAdmin = createAdminClient()
 
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+    const { error: uploadError } = await supabaseAdmin.storage
       .from('supplier-invoices')
       .upload(fileName, file, {
         contentType: file.type,

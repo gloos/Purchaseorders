@@ -73,7 +73,8 @@ export function addBreadcrumb(
  * Start a new transaction for performance monitoring
  * @param name - Transaction name
  * @param op - Operation type (e.g., 'http.server', 'db.query')
+ * @deprecated - startTransaction is deprecated in newer Sentry versions, use startSpan instead
  */
-export function startTransaction(name: string, op: string) {
-  return Sentry.startTransaction({ name, op })
-}
+// export function startTransaction(name: string, op: string) {
+//   return Sentry.startTransaction({ name, op })
+// }
