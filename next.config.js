@@ -75,7 +75,9 @@ const sentryWebpackPluginOptions = {
 }
 
 // Make sure adding Sentry options is the last code to run before exporting
-// Only enable Sentry plugin if auth token is available
-module.exports = process.env.SENTRY_AUTH_TOKEN
-  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
-  : nextConfig
+// Temporarily disable Sentry plugin to unblock deployment
+// TODO: Get valid SENTRY_AUTH_TOKEN from https://sentry.io/settings/account/api/auth-tokens/
+module.exports = nextConfig
+
+// Uncomment below when you have a valid Sentry auth token:
+// module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions)
