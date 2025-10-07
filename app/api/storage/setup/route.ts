@@ -1,20 +1,11 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-// Admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST() {
   try {
+    // Create admin client at runtime
+    const supabaseAdmin = createAdminClient()
+
     // Create company-logos bucket
     const { data: bucket, error: bucketError } = await supabaseAdmin.storage.createBucket('company-logos', {
       public: true,
