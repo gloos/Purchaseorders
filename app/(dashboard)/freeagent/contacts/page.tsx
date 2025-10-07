@@ -1,12 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
-
-// Force dynamic rendering - this page uses search params
-export const dynamic = 'force-dynamic'
 
 interface Contact {
   id: string
@@ -19,7 +16,7 @@ interface Contact {
   syncedAt: string
 }
 
-export default function FreeAgentContactsPage() {
+function FreeAgentContactsContent() {
   const searchParams = useSearchParams()
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
@@ -180,5 +177,22 @@ export default function FreeAgentContactsPage() {
       )}
       </div>
     </div>
+  )
+}
+
+export default function FreeAgentContactsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <Navbar />
+        <div className="p-8">
+          <div className="text-center py-12">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <FreeAgentContactsContent />
+    </Suspense>
   )
 }
