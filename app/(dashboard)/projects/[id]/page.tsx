@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { Navbar } from '@/components/navbar'
@@ -37,7 +37,6 @@ interface Project {
 
 export default function ProjectDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const [project, setProject] = useState<Project | null>(null)
   const [analytics, setAnalytics] = useState<ProjectAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
