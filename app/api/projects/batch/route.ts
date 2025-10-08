@@ -7,7 +7,7 @@ import * as Sentry from '@sentry/nextjs'
 const batchUpdateSchema = z.object({
   projectIds: z.array(z.string()).min(1),
   operation: z.enum(['updateStatus', 'assignTeamMember', 'updateBudgetAlert']),
-  data: z.record(z.any())
+  data: z.record(z.string(), z.any())
 })
 
 export async function PATCH(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest) {
     const validation = batchUpdateSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.errors },
+        { error: 'Validation failed', details: validation.error.issues },
         { status: 400 }
       )
     }

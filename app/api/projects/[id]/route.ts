@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/nextjs'
 
 // GET /api/projects/[id] - Get single project with full details
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -126,7 +126,7 @@ export async function PATCH(
     const validation = updateProjectSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.errors },
+        { error: 'Validation failed', details: validation.error.issues },
         { status: 400 }
       )
     }
@@ -186,7 +186,7 @@ export async function PATCH(
 
 // DELETE /api/projects/[id] - Delete project (soft delete by setting HIDDEN)
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

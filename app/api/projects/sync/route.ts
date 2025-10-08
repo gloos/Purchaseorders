@@ -10,9 +10,9 @@ export async function POST(request: NextRequest) {
   try {
     const { organizationId, user } = await getUserAndOrgOrThrow()
 
-    // Apply rate limiting (5 sync requests per minute per user)
+    // Apply rate limiting (FreeAgent API rate limit)
     const identifier = getIdentifier(request, user.id)
-    const rateLimitResult = await checkRateLimit('freeagent-projects', identifier, 5, 60)
+    const rateLimitResult = await checkRateLimit('freeagent', identifier)
 
     if (!rateLimitResult.success) {
       const headers = new Headers()
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
           status: 'COMPLETED',
           projectsSynced: synced,
           projectsFailed: failed,
-          errorDetails: errors.length > 0 ? errors : null,
+          errorDetails: errors.length > 0 ? errors : undefined,
           completedAt: new Date()
         }
       })
