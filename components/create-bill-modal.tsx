@@ -210,7 +210,8 @@ export function CreateBillModal({ isOpen, onClose, purchaseOrder, onSuccess }: C
     onClose()
   }
 
-  const canProceedToStep2 = contactVerified || contactUrl !== ''
+  // Step 1: Always allow proceeding (contact matching is automatic)
+  const canProceedToStep2 = true
   const canProceedToStep3 = paymentTermsDays > 0 && dueDate !== ''
   const canProceedToStep4 = purchaseOrder.lineItems.every(item => categoryMappings[item.id])
 
