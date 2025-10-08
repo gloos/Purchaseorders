@@ -29,7 +29,7 @@ const healthIcons = {
 }
 
 export default function ProjectsPage() {
-  const { hasPermission, loading: userLoading } = useUser()
+  const { loading: userLoading } = useUser()
   const [projects, setProjects] = useState<ProjectWithStats[]>([])
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
