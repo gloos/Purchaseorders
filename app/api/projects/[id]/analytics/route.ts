@@ -5,7 +5,7 @@ import { Decimal } from '@prisma/client/runtime/library'
 import * as Sentry from '@sentry/nextjs'
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
