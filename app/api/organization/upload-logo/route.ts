@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { getUserAndOrgOrThrow } from '@/lib/auth-helpers'
+import * as Sentry from '@sentry/nextjs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,7 +62,10 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       console.error('Upload error:', uploadError)
-      return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
+      return NextResponse.json({
+        error: 'Failed to upload file',
+        details: uploadError.message
+      }, { status: 500 })
     }
 
     // Get public URL
@@ -83,6 +87,8 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error uploading logo:', error)
+    Sentry.captureException(error)
+
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -90,9 +96,15 @@ export async function POST(request: NextRequest) {
       if (error.message === 'No organization found') {
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
       }
+
+      return NextResponse.json(
+        { error: 'Failed to upload logo', details: error.message },
+        { status: 500 }
+      )
     }
+
     return NextResponse.json(
-      { error: 'Failed to upload logo' },
+      { error: 'Failed to upload logo', details: 'Unknown error' },
       { status: 500 }
     )
   }
