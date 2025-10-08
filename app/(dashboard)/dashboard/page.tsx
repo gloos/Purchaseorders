@@ -34,6 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
   APPROVED: '#34d399',
   SENT: '#60a5fa',
   RECEIVED: '#a78bfa',
+  INVOICED: '#14b8a6',
   CANCELLED: '#f87171'
 }
 
@@ -43,6 +44,7 @@ const STATUS_LABELS: Record<string, string> = {
   APPROVED: 'Approved',
   SENT: 'Sent',
   RECEIVED: 'Received',
+  INVOICED: 'Invoiced',
   CANCELLED: 'Cancelled'
 }
 
@@ -256,10 +258,16 @@ export default function DashboardPage() {
                             po.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
                             po.status === 'SENT' ? 'bg-blue-100 text-blue-800' :
                             po.status === 'RECEIVED' ? 'bg-purple-100 text-purple-800' :
+                            po.status === 'INVOICED' ? 'bg-teal-100 text-teal-800' :
                             'bg-red-100 text-red-800'
                           }`}>
                             {STATUS_LABELS[po.status] || po.status}
                           </span>
+                          {po.status === 'INVOICED' && (
+                            <span className="ml-2 px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">
+                              → Create Bill
+                            </span>
+                          )}
                         </div>
                         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{po.title}</p>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">

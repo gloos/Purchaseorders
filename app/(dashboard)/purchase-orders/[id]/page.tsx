@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
+import { CreateBillModal } from '@/components/create-bill-modal'
 
 type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'INVOICED' | 'CANCELLED'
 
@@ -40,6 +41,11 @@ interface PurchaseOrder {
   invoiceUrl?: string | null
   invoiceReceivedAt?: string | null
   invoiceUploadTokenExpiresAt?: string | null
+  paymentTermsDays?: number | null
+  freeAgentBillId?: string | null
+  freeAgentBillUrl?: string | null
+  freeAgentBillCreatedAt?: string | null
+  freeAgentContactUrl?: string | null
   createdAt: string
   createdBy: {
     name: string | null
@@ -47,6 +53,7 @@ interface PurchaseOrder {
   }
   organization: {
     name: string
+    freeAgentAccessToken?: string | null
   }
   lineItems: LineItem[]
 }
@@ -80,12 +87,20 @@ export default function PurchaseOrderDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
+  const [showBillModal, setShowBillModal] = useState(false)
+  const [canCreateBill, setCanCreateBill] = useState(false)
 
   useEffect(() => {
     if (params.id) {
       fetchPurchaseOrder()
     }
   }, [params.id])
+
+  useEffect(() => {
+    if (po) {
+      checkBillEligibility()
+    }
+  }, [po])
 
   const fetchPurchaseOrder = async () => {
     try {
@@ -103,6 +118,23 @@ export default function PurchaseOrderDetailPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const checkBillEligibility = async () => {
+    try {
+      const response = await fetch(`/api/purchase-orders/${params.id}/create-bill`)
+      if (response.ok) {
+        const data = await response.json()
+        setCanCreateBill(data.canCreate)
+      }
+    } catch (error) {
+      console.error('Error checking bill eligibility:', error)
+    }
+  }
+
+  const handleBillCreated = () => {
+    setMessage('Bill created successfully in FreeAgent!')
+    fetchPurchaseOrder()
   }
 
   const handleDelete = async () => {
@@ -207,6 +239,28 @@ export default function PurchaseOrderDetailPage() {
               >
                 {sending ? 'Sending...' : 'Send Email'}
               </button>
+            )}
+            {canCreateBill && hasPermission('canEditPO') && (
+              <button
+                onClick={() => setShowBillModal(true)}
+                className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                title="Create bill in FreeAgent"
+              >
+                Create FreeAgent Bill
+              </button>
+            )}
+            {po.freeAgentBillUrl && (
+              <a
+                href={po.freeAgentBillUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors inline-flex items-center"
+              >
+                View Bill in FreeAgent
+                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
             )}
             {hasPermission('canEditPO') && (
               <Link
@@ -481,6 +535,16 @@ export default function PurchaseOrderDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Bill Creation Modal */}
+      {po && (
+        <CreateBillModal
+          isOpen={showBillModal}
+          onClose={() => setShowBillModal(false)}
+          purchaseOrder={po}
+          onSuccess={handleBillCreated}
+        />
+      )}
       </div>
     </div>
   )
