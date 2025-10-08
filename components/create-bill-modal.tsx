@@ -45,9 +45,8 @@ export function CreateBillModal({ isOpen, onClose, purchaseOrder, onSuccess }: C
   const [step, setStep] = useState<Step>(1)
   const [error, setError] = useState('')
 
-  // Step 1: Contact
-  const [contactUrl] = useState(purchaseOrder.freeAgentContactUrl || '')
-  const [contactVerified] = useState(!!purchaseOrder.freeAgentContactUrl)
+  // Step 1: Contact (automatic matching, no user action required)
+  const contactUrl = purchaseOrder.freeAgentContactUrl || ''
 
   // Step 2: Payment Details
   const [paymentTermsDays, setPaymentTermsDays] = useState(purchaseOrder.paymentTermsDays || 30)
