@@ -110,13 +110,41 @@ export async function POST(
       )
     }
 
-    // 9. Initialize FreeAgent client
-    const freeAgentClient = new FreeAgentClient(
-      organization.freeAgentAccessToken,
-      organization.freeAgentRefreshToken || undefined
-    )
+    // 9. Check if token needs refresh
+    let accessToken = organization.freeAgentAccessToken
+    if (organization.freeAgentTokenExpiry && new Date() >= new Date(organization.freeAgentTokenExpiry)) {
+      // Token expired, refresh it
+      if (!organization.freeAgentRefreshToken) {
+        return NextResponse.json(
+          { error: 'FreeAgent token expired. Please reconnect FreeAgent in settings.' },
+          { status: 400 }
+        )
+      }
 
-    // 10. Match or create contact
+      const tokens = await FreeAgentClient.refreshAccessToken(
+        organization.freeAgentRefreshToken,
+        process.env.FREEAGENT_CLIENT_ID!,
+        process.env.FREEAGENT_CLIENT_SECRET!
+      )
+
+      accessToken = tokens.access_token
+      const expiresAt = new Date(Date.now() + tokens.expires_in * 1000)
+
+      // Update tokens in database
+      await prisma.organization.update({
+        where: { id: organization.id },
+        data: {
+          freeAgentAccessToken: tokens.access_token,
+          freeAgentRefreshToken: tokens.refresh_token,
+          freeAgentTokenExpiry: expiresAt
+        }
+      })
+    }
+
+    // 10. Initialize FreeAgent client with fresh token
+    const freeAgentClient = new FreeAgentClient(accessToken)
+
+    // 11. Match or create contact
     let finalContactUrl: string
 
     if (contactUrl) {
@@ -137,7 +165,7 @@ export async function POST(
       })
     }
 
-    // 11. Transform PO to bill format
+    // 12. Transform PO to bill format
     const billData = await transformPOToBill(
       po,
       finalContactUrl,
@@ -146,14 +174,14 @@ export async function POST(
       paymentTermsDays
     )
 
-    // 12. Create bill in FreeAgent with retry logic
+    // 13. Create bill in FreeAgent with retry logic
     const bill = await retryWithBackoff(
       async () => await freeAgentClient.createBill(billData),
       3, // max retries
       1000 // initial delay ms
     )
 
-    // 13. Update PO with bill information
+    // 14. Update PO with bill information
     await prisma.purchaseOrder.update({
       where: { id: poId },
       data: {
@@ -164,7 +192,7 @@ export async function POST(
       }
     })
 
-    // 14. Return success response
+    // 15. Return success response
     return NextResponse.json({
       message: 'Bill created successfully in FreeAgent',
       bill: {

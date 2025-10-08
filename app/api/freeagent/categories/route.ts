@@ -35,16 +35,44 @@ export async function GET() {
       )
     }
 
-    // 4. Initialize FreeAgent client
-    const freeAgentClient = new FreeAgentClient(
-      organization.freeAgentAccessToken,
-      organization.freeAgentRefreshToken || undefined
-    )
+    // 4. Check if token needs refresh
+    let accessToken = organization.freeAgentAccessToken
+    if (organization.freeAgentTokenExpiry && new Date() >= new Date(organization.freeAgentTokenExpiry)) {
+      // Token expired, refresh it
+      if (!organization.freeAgentRefreshToken) {
+        return NextResponse.json(
+          { error: 'FreeAgent token expired. Please reconnect FreeAgent in settings.' },
+          { status: 400 }
+        )
+      }
 
-    // 5. Fetch categories
+      const tokens = await FreeAgentClient.refreshAccessToken(
+        organization.freeAgentRefreshToken,
+        process.env.FREEAGENT_CLIENT_ID!,
+        process.env.FREEAGENT_CLIENT_SECRET!
+      )
+
+      accessToken = tokens.access_token
+      const expiresAt = new Date(Date.now() + tokens.expires_in * 1000)
+
+      // Update tokens in database
+      await prisma.organization.update({
+        where: { id: organization.id },
+        data: {
+          freeAgentAccessToken: tokens.access_token,
+          freeAgentRefreshToken: tokens.refresh_token,
+          freeAgentTokenExpiry: expiresAt
+        }
+      })
+    }
+
+    // 5. Initialize FreeAgent client with fresh token
+    const freeAgentClient = new FreeAgentClient(accessToken)
+
+    // 6. Fetch categories
     const categories = await freeAgentClient.getCategories(true)
 
-    // 6. Return formatted categories
+    // 7. Return formatted categories
     return NextResponse.json({
       categories: {
         adminExpenses: categories.admin_expenses_categories,
