@@ -127,6 +127,52 @@ export const createOrganizationSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
 })
 
+// FreeAgent Bill Line Item schema
+export const billLineItemSchema = z.object({
+  description: z.string().min(1, 'Description is required').max(500, 'Description too long'),
+  totalValue: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid amount format'),
+  salesTaxRate: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid tax rate format').optional(),
+  category: z.string().url('Invalid category URL')
+})
+
+// FreeAgent Bill Creation schema
+export const createBillSchema = z.object({
+  purchaseOrderId: z.string().uuid('Invalid PO ID'),
+  categoryMappings: z.record(z.string(), z.string().url('Invalid category URL')), // lineItemId -> categoryUrl
+  paymentTermsDays: z.number().int().positive('Payment terms must be positive').min(1).max(365).optional(),
+  dueDate: z.string().optional().transform(val => val ? new Date(val).toISOString() : undefined),
+  contactUrl: z.string().url('Invalid contact URL').optional()
+}).refine(
+  (data) => {
+    // Must have either dueDate or paymentTermsDays
+    return data.dueDate || data.paymentTermsDays
+  },
+  {
+    message: 'Either dueDate or paymentTermsDays must be provided',
+    path: ['dueDate']
+  }
+)
+
+// Expense Category Mapping schema
+export const createExpenseMappingSchema = z.object({
+  keyword: z.string().min(1, 'Keyword is required').max(100, 'Keyword too long').toLowerCase(),
+  freeAgentCategoryUrl: z.string().url('Invalid category URL')
+})
+
+// Bulk Expense Category Mappings schema
+export const bulkExpenseMappingsSchema = z.object({
+  mappings: z.array(createExpenseMappingSchema).min(1, 'At least one mapping is required')
+})
+
+// FreeAgent Category response schema (for validation)
+export const freeAgentCategorySchema = z.object({
+  url: z.string(),
+  description: z.string(),
+  nominal_code: z.string().optional(),
+  allowable_for_tax: z.boolean().optional(),
+  auto_sales_tax_rate: z.number().optional()
+})
+
 /**
  * Helper function to validate request body and return formatted errors
  */

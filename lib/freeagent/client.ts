@@ -29,6 +29,43 @@ export interface FreeAgentContact {
   is_active?: boolean
 }
 
+export interface FreeAgentCategory {
+  url: string
+  description: string
+  nominal_code?: string
+  allowable_for_tax?: boolean
+  auto_sales_tax_rate?: number
+}
+
+export interface FreeAgentBillItem {
+  url?: string // Empty string for new items, URL for existing
+  description: string
+  total_value: string
+  sales_tax_rate?: string
+  category: string
+  stock_item?: string
+  stock_altering_quantity?: string
+}
+
+export interface FreeAgentBill {
+  url?: string
+  contact: string
+  reference?: string
+  dated_on: string // ISO date YYYY-MM-DD
+  due_on: string // ISO date YYYY-MM-DD
+  bill_items: FreeAgentBillItem[]
+  currency?: string
+  exchange_rate?: string
+  rebill_type?: string
+  rebill_factor?: string
+  rebill_to_project?: string
+  total_value?: string
+  sales_tax_value?: string
+  status?: string
+  created_at?: string
+  updated_at?: string
+}
+
 export class FreeAgentClient {
   private accessToken: string
 
@@ -175,5 +212,68 @@ export class FreeAgentClient {
   async getCompany(): Promise<any> {
     const response = await this.request('/company')
     return response.company
+  }
+
+  // Get all expense categories
+  async getCategories(includeSubAccounts: boolean = true): Promise<{
+    admin_expenses_categories: FreeAgentCategory[]
+    cost_of_sales_categories: FreeAgentCategory[]
+    income_categories: FreeAgentCategory[]
+    general_categories: FreeAgentCategory[]
+  }> {
+    const endpoint = includeSubAccounts ? '/categories?sub_accounts=true' : '/categories'
+    const response = await this.request(endpoint)
+    return response
+  }
+
+  // Create a bill in FreeAgent
+  async createBill(billData: Partial<FreeAgentBill>): Promise<FreeAgentBill> {
+    const response = await this.request('/bills', {
+      method: 'POST',
+      body: JSON.stringify({ bill: billData })
+    })
+    return response.bill
+  }
+
+  // Get a single bill
+  async getBill(billUrl: string): Promise<FreeAgentBill> {
+    const response = await this.request(billUrl.replace(FREEAGENT_API_URL, ''))
+    return response.bill
+  }
+
+  // Find contact by email
+  async findContactByEmail(email: string): Promise<FreeAgentContact | null> {
+    const contacts = await this.getContacts()
+    return contacts.find(c => c.email?.toLowerCase() === email.toLowerCase()) || null
+  }
+
+  // Find contact by name (fuzzy match)
+  async findContactByName(name: string): Promise<FreeAgentContact | null> {
+    const contacts = await this.getContacts()
+    const normalizedName = name.toLowerCase().trim()
+
+    return contacts.find(c => {
+      const orgName = c.organisation_name?.toLowerCase().trim()
+      const fullName = `${c.first_name || ''} ${c.last_name || ''}`.toLowerCase().trim()
+      return orgName === normalizedName || fullName === normalizedName
+    }) || null
+  }
+
+  // Create contact if it doesn't exist, otherwise return existing
+  async ensureContact(contactData: Partial<FreeAgentContact>): Promise<FreeAgentContact> {
+    // Try to find existing contact by email first
+    if (contactData.email) {
+      const existing = await this.findContactByEmail(contactData.email)
+      if (existing) return existing
+    }
+
+    // Try to find by organization name
+    if (contactData.organisation_name) {
+      const existing = await this.findContactByName(contactData.organisation_name)
+      if (existing) return existing
+    }
+
+    // Create new contact
+    return await this.createContact(contactData)
   }
 }

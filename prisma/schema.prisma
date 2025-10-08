@@ -63,12 +63,17 @@ model Organization {
   freeAgentCompanyUrl       String?
   companySyncedAt           DateTime?
 
+  // FreeAgent Bill Creation Settings
+  defaultPaymentTermsDays   Int?      @default(30)
+  defaultExpenseCategoryUrl String?
+
   // Relations
   users          User[]
   purchaseOrders PurchaseOrder[]
   contacts       Contact[]
   counters       Counter[]
   taxRates       TaxRate[]
+  expenseCategoryMappings ExpenseCategoryMapping[]
 
   @@map("organizations")
 }
@@ -195,6 +200,13 @@ model PurchaseOrder {
   invoiceUrl                  String?
   invoiceReceivedAt           DateTime?
 
+  // FreeAgent Bill Integration
+  freeAgentBillId       String?   @unique
+  freeAgentBillUrl      String?
+  freeAgentBillCreatedAt DateTime?
+  paymentTermsDays      Int?      @default(30)
+  freeAgentContactUrl   String?   // Cached matched contact URL
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -246,5 +258,22 @@ model Counter {
 
   @@unique([organizationId, name])
   @@map("counters")
+  @@index([organizationId])
+}
+
+// Expense Category Mapping model - stores user preferences for mapping line items to FreeAgent categories
+model ExpenseCategoryMapping {
+  id                    String   @id @default(uuid())
+  keyword               String   // e.g., "software", "hardware", "services"
+  freeAgentCategoryUrl  String   // FreeAgent category URL
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, keyword])
+  @@map("expense_category_mappings")
   @@index([organizationId])
 }
