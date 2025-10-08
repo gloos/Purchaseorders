@@ -59,11 +59,70 @@ export default function ProjectsPage() {
     }
   }, [filters])
 
+  const startPolling = useCallback((syncLogId: string) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const statusResponse = await fetch(`/api/projects/sync/${syncLogId}`)
+        if (statusResponse.ok) {
+          const status = await statusResponse.json()
+
+          setSyncProgress({
+            total: status.projectsTotal || 0,
+            synced: status.projectsSynced || 0,
+            failed: status.projectsFailed || 0
+          })
+
+          if (status.status === 'COMPLETED' || status.status === 'FAILED') {
+            clearInterval(pollInterval)
+            setSyncing(false)
+
+            if (status.status === 'COMPLETED') {
+              alert(`Sync completed! Synced ${status.projectsSynced} projects. ${status.projectsFailed > 0 ? `Failed: ${status.projectsFailed}` : ''}`)
+            } else {
+              alert(`Sync failed. Please try again.`)
+            }
+
+            setSyncProgress(null)
+            fetchProjects()
+          }
+        }
+      } catch (error) {
+        console.error('Error polling sync status:', error)
+      }
+    }, 2000)
+
+    // Clear interval after 10 minutes as a safety measure
+    setTimeout(() => {
+      clearInterval(pollInterval)
+      setSyncing(false)
+      setSyncProgress(null)
+    }, 600000)
+  }, [fetchProjects])
+
+  const checkForInProgressSync = useCallback(async () => {
+    try {
+      // Get the most recent sync log
+      const response = await fetch('/api/projects/sync-status')
+      if (response.ok) {
+        const status = await response.json()
+        if (status.status === 'IN_PROGRESS' && status.syncLogId) {
+          // Resume polling for this sync
+          setSyncing(true)
+          startPolling(status.syncLogId)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for in-progress sync:', error)
+    }
+  }, [startPolling])
+
+  // Check for in-progress syncs on page load
   useEffect(() => {
     if (!userLoading) {
       fetchProjects()
+      checkForInProgressSync()
     }
-  }, [fetchProjects, userLoading])
+  }, [userLoading, fetchProjects, checkForInProgressSync])
 
   const handleSync = async () => {
     setSyncing(true)
@@ -84,49 +143,7 @@ export default function ProjectsPage() {
       }
 
       const result = await response.json()
-      const syncLogId = result.syncLogId
-
-      // Poll for sync status
-      const pollInterval = setInterval(async () => {
-        try {
-          const statusResponse = await fetch(`/api/projects/sync/${syncLogId}`)
-          if (statusResponse.ok) {
-            const status = await statusResponse.json()
-
-            setSyncProgress({
-              total: status.projectsTotal || 0,
-              synced: status.projectsSynced || 0,
-              failed: status.projectsFailed || 0
-            })
-
-            if (status.status === 'COMPLETED' || status.status === 'FAILED') {
-              clearInterval(pollInterval)
-              setSyncing(false)
-
-              if (status.status === 'COMPLETED') {
-                alert(`Sync completed! Synced ${status.projectsSynced} projects. ${status.projectsFailed > 0 ? `Failed: ${status.projectsFailed}` : ''}`)
-              } else {
-                alert(`Sync failed. Please try again.`)
-              }
-
-              setSyncProgress(null)
-              await fetchProjects()
-            }
-          }
-        } catch (error) {
-          console.error('Error polling sync status:', error)
-        }
-      }, 2000) // Poll every 2 seconds
-
-      // Clear interval after 10 minutes as a safety measure
-      setTimeout(() => {
-        clearInterval(pollInterval)
-        if (syncing) {
-          setSyncing(false)
-          setSyncProgress(null)
-          alert('Sync timed out. Please check the results and try again if needed.')
-        }
-      }, 600000)
+      startPolling(result.syncLogId)
 
     } catch (error) {
       console.error('Error syncing projects:', error)
