@@ -127,7 +127,14 @@ function calculateProjectAnalytics(project: any) {
   }
 
   // Profitability Analysis
-  const profitability = {
+  const profitability: {
+    revenue: string
+    costs: string
+    profit: string
+    margin: number | null
+    projectedProfit: string | null
+    projectedMargin: number | null
+  } = {
     revenue: project.totalRevenue.toString(),
     costs: poAnalysis.totalPoValue.toString(),
     profit: new Decimal(project.totalRevenue.toString()).minus(poAnalysis.totalPoValue).toString(),
