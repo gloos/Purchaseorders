@@ -433,6 +433,7 @@ model ProjectSyncLog {
   organizationId String
   syncType       String
   status         String
+  projectsTotal  Int?         @default(0)
   projectsSynced Int?         @default(0)
   projectsFailed Int?         @default(0)
   errorDetails   Json?

@@ -5,12 +5,161 @@ import { FreeAgentClient } from '@/lib/freeagent/client'
 import { checkRateLimit, getIdentifier, addRateLimitHeaders } from '@/lib/rate-limit'
 import * as Sentry from '@sentry/nextjs'
 import { Decimal } from '@prisma/client/runtime/library'
+import { ProjectStatus, ProjectHealthStatus } from '@prisma/client'
+
+// Helper function to perform the actual sync
+async function performSync(syncLogId: string, organizationId: string, accessToken: string) {
+  try {
+    const freeAgent = new FreeAgentClient(accessToken)
+
+    // Fetch all projects from FreeAgent
+    const freeAgentProjects = await freeAgent.getProjects()
+
+    // Update sync log with total count
+    await prisma.projectSyncLog.update({
+      where: { id: syncLogId },
+      data: { projectsTotal: freeAgentProjects.length }
+    })
+
+    let synced = 0
+    let failed = 0
+    const errors: any[] = []
+
+    for (const faProject of freeAgentProjects) {
+      try {
+        // Map FreeAgent status to our status
+        const status = mapFreeAgentStatus(faProject.status)
+
+        // Get client details if available
+        let clientName = null
+        let clientEmail = null
+        let clientFreeAgentId = null
+
+        if (faProject.contact) {
+          try {
+            const contactUrl = faProject.contact
+            const contactId = contactUrl.split('/').pop()
+            const contact = await prisma.contact.findUnique({
+              where: { freeAgentId: contactId }
+            })
+
+            if (contact) {
+              clientName = contact.name
+              clientEmail = contact.email
+              clientFreeAgentId = contactId
+            }
+          } catch (error) {
+            console.warn('Failed to fetch client details:', error)
+          }
+        }
+
+        // Calculate financial metrics
+        const totalRevenue = faProject.total_invoiced_amount || 0
+        const totalCosts = 0
+        const profitAmount = totalRevenue - totalCosts
+        const profitMargin = totalRevenue > 0 ? (profitAmount / totalRevenue) * 100 : 0
+
+        // Upsert project
+        await prisma.project.upsert({
+          where: { freeAgentId: faProject.url },
+          create: {
+            freeAgentId: faProject.url,
+            name: faProject.name,
+            code: faProject.name,
+            status,
+            currency: faProject.currency || 'GBP',
+            budget: faProject.budget_units ? parseFloat(faProject.budget_units) : null,
+            totalRevenue,
+            totalCosts,
+            profitAmount,
+            profitMargin,
+            clientName,
+            clientEmail,
+            clientFreeAgentId,
+            startDate: faProject.starts_on ? new Date(faProject.starts_on) : null,
+            endDate: faProject.ends_on ? new Date(faProject.ends_on) : null,
+            organizationId,
+            completedAt: status === 'COMPLETED' ? new Date() : null,
+            cancelledAt: status === 'CANCELLED' ? new Date() : null
+          },
+          update: {
+            name: faProject.name,
+            code: faProject.name,
+            status,
+            currency: faProject.currency || 'GBP',
+            budget: faProject.budget_units ? parseFloat(faProject.budget_units) : null,
+            totalRevenue,
+            totalCosts,
+            profitAmount,
+            profitMargin,
+            clientName,
+            clientEmail,
+            clientFreeAgentId,
+            startDate: faProject.starts_on ? new Date(faProject.starts_on) : null,
+            endDate: faProject.ends_on ? new Date(faProject.ends_on) : null,
+            completedAt: status === 'COMPLETED' ? new Date() : null,
+            cancelledAt: status === 'CANCELLED' ? new Date() : null
+          }
+        })
+
+        synced++
+
+        // Update progress periodically
+        if (synced % 10 === 0) {
+          await prisma.projectSyncLog.update({
+            where: { id: syncLogId },
+            data: { projectsSynced: synced }
+          })
+        }
+      } catch (error) {
+        failed++
+        errors.push({
+          project: faProject.name,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+        console.error(`Failed to sync project ${faProject.name}:`, error)
+        Sentry.captureException(error)
+      }
+    }
+
+    // Update sync log with completion
+    await prisma.projectSyncLog.update({
+      where: { id: syncLogId },
+      data: {
+        status: 'COMPLETED',
+        projectsSynced: synced,
+        projectsFailed: failed,
+        errorDetails: errors.length > 0 ? errors : undefined,
+        completedAt: new Date()
+      }
+    })
+
+    // Update project health statuses and PO values
+    await updateProjectMetrics(organizationId)
+
+  } catch (error) {
+    console.error('Sync failed:', error)
+    Sentry.captureException(error)
+
+    // Mark sync as failed
+    await prisma.projectSyncLog.update({
+      where: { id: syncLogId },
+      data: {
+        status: 'FAILED',
+        errorDetails: [{
+          error: error instanceof Error ? error.message : 'Sync operation failed'
+        }],
+        completedAt: new Date()
+      }
+    })
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { organizationId, user } = await getUserAndOrgOrThrow()
 
-    // Apply rate limiting (FreeAgent API rate limit)
+    // Apply rate limiting
     const identifier = getIdentifier(request, user.id)
     const rateLimitResult = await checkRateLimit('freeagent', identifier)
 
@@ -81,176 +230,44 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    try {
-      const freeAgent = new FreeAgentClient(accessToken)
+    // Start sync in background (don't await)
+    performSync(syncLog.id, organizationId, accessToken).catch(error => {
+      console.error('Background sync error:', error)
+      Sentry.captureException(error)
+    })
 
-      // Fetch all projects from FreeAgent
-      const freeAgentProjects = await freeAgent.getProjects()
-
-      let synced = 0
-      let failed = 0
-      const errors: any[] = []
-
-      for (const faProject of freeAgentProjects) {
-        try {
-          // Map FreeAgent status to our status
-          const status = mapFreeAgentStatus(faProject.status)
-
-          // Get client details if available
-          let clientName = null
-          let clientEmail = null
-          let clientFreeAgentId = null
-
-          if (faProject.contact) {
-            try {
-              const contactUrl = faProject.contact
-              const contactId = contactUrl.split('/').pop()
-              const contact = await prisma.contact.findUnique({
-                where: { freeAgentId: contactId }
-              })
-
-              if (contact) {
-                clientName = contact.name
-                clientEmail = contact.email
-                clientFreeAgentId = contactId
-              }
-            } catch (error) {
-              // Continue without client details if fetch fails
-              console.warn('Failed to fetch client details:', error)
-            }
-          }
-
-          // Calculate financial metrics
-          // Note: For now, we're setting these to defaults
-          // In the future, we can fetch invoices and bills from FreeAgent
-          const totalRevenue = faProject.total_invoiced_amount || 0
-          const totalCosts = 0 // Would need to fetch bills
-          const profitAmount = totalRevenue - totalCosts
-          const profitMargin = totalRevenue > 0 ? (profitAmount / totalRevenue) * 100 : 0
-
-          // Upsert project
-          await prisma.project.upsert({
-            where: { freeAgentId: faProject.url },
-            create: {
-              freeAgentId: faProject.url,
-              name: faProject.name,
-              code: faProject.name, // FreeAgent doesn't have separate code field
-              status,
-              currency: faProject.currency || 'GBP',
-              budget: faProject.budget_units ? parseFloat(faProject.budget_units) : null,
-              totalRevenue,
-              totalCosts,
-              profitAmount,
-              profitMargin,
-              clientName,
-              clientEmail,
-              clientFreeAgentId,
-              startDate: faProject.starts_on ? new Date(faProject.starts_on) : null,
-              endDate: faProject.ends_on ? new Date(faProject.ends_on) : null,
-              freeAgentUrl: faProject.url,
-              freeAgentCreatedAt: new Date(faProject.created_at),
-              freeAgentUpdatedAt: new Date(faProject.updated_at),
-              lastSyncedAt: new Date(),
-              organizationId
-            },
-            update: {
-              name: faProject.name,
-              code: faProject.name,
-              status,
-              currency: faProject.currency || 'GBP',
-              budget: faProject.budget_units ? parseFloat(faProject.budget_units) : null,
-              totalRevenue,
-              totalCosts,
-              profitAmount,
-              profitMargin,
-              clientName,
-              clientEmail,
-              clientFreeAgentId,
-              startDate: faProject.starts_on ? new Date(faProject.starts_on) : null,
-              endDate: faProject.ends_on ? new Date(faProject.ends_on) : null,
-              freeAgentUpdatedAt: new Date(faProject.updated_at),
-              lastSyncedAt: new Date(),
-              syncError: null
-            }
-          })
-
-          synced++
-        } catch (error: any) {
-          failed++
-          errors.push({
-            project: faProject.name,
-            error: error.message
-          })
-
-          // Mark project with sync error
-          if (faProject.url) {
-            await prisma.project.updateMany({
-              where: { freeAgentId: faProject.url },
-              data: { syncError: error.message }
-            }).catch(() => {}) // Ignore if project doesn't exist
-          }
-        }
-      }
-
-      // Update sync log
-      await prisma.projectSyncLog.update({
-        where: { id: syncLog.id },
-        data: {
-          status: 'COMPLETED',
-          projectsSynced: synced,
-          projectsFailed: failed,
-          errorDetails: errors.length > 0 ? errors : undefined,
-          completedAt: new Date()
-        }
-      })
-
-      // Update project health statuses and PO values
-      await updateProjectMetrics(organizationId)
-
-      // Add rate limit headers
-      const headers = new Headers()
-      addRateLimitHeaders(headers, rateLimitResult)
-
-      return NextResponse.json({
-        success: true,
-        synced,
-        failed,
-        errors: errors.length > 0 ? errors : undefined
-      }, { headers })
-
-    } catch (error: any) {
-      // Update sync log with failure
-      await prisma.projectSyncLog.update({
-        where: { id: syncLog.id },
-        data: {
-          status: 'FAILED',
-          errorDetails: { error: error.message },
-          completedAt: new Date()
-        }
-      })
-
-      throw error
-    }
+    // Return immediately with sync log ID
+    return NextResponse.json({
+      syncLogId: syncLog.id,
+      status: 'IN_PROGRESS',
+      message: 'Sync started. Poll /api/projects/sync/' + syncLog.id + ' for status.'
+    })
 
   } catch (error) {
-    console.error('Error syncing projects:', error)
+    console.error('Error starting sync:', error)
     Sentry.captureException(error)
     return NextResponse.json(
-      { error: 'Failed to sync projects' },
+      { error: 'Failed to start sync' },
       { status: 500 }
     )
   }
 }
 
-function mapFreeAgentStatus(faStatus: string): 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'HIDDEN' | 'ON_HOLD' {
-  const statusMap: Record<string, 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'HIDDEN' | 'ON_HOLD'> = {
-    'Active': 'ACTIVE',
-    'Completed': 'COMPLETED',
-    'Cancelled': 'CANCELLED',
-    'Hidden': 'HIDDEN',
-    'Pending': 'ON_HOLD'
+function mapFreeAgentStatus(freeAgentStatus: string): ProjectStatus {
+  switch (freeAgentStatus?.toLowerCase()) {
+    case 'active':
+      return ProjectStatus.ACTIVE
+    case 'completed':
+      return ProjectStatus.COMPLETED
+    case 'cancelled':
+      return ProjectStatus.CANCELLED
+    case 'hidden':
+      return ProjectStatus.HIDDEN
+    case 'pending':
+      return ProjectStatus.ACTIVE // Map pending to active
+    default:
+      return ProjectStatus.ACTIVE
   }
-  return statusMap[faStatus] || 'ACTIVE'
 }
 
 async function updateProjectMetrics(organizationId: string) {
@@ -258,7 +275,10 @@ async function updateProjectMetrics(organizationId: string) {
     where: { organizationId },
     include: {
       purchaseOrders: {
-        select: { totalAmount: true, status: true }
+        select: {
+          totalAmount: true,
+          status: true
+        }
       }
     }
   })
@@ -269,24 +289,33 @@ async function updateProjectMetrics(organizationId: string) {
       new Decimal(0)
     )
 
-    let healthStatus: 'HEALTHY' | 'WARNING' | 'CRITICAL' | 'UNKNOWN' = 'UNKNOWN'
+    const totalRevenue = new Decimal(project.totalRevenue.toString())
+    const profitAmount = totalRevenue.minus(totalPoValue)
+    const profitMargin = totalRevenue.gt(0)
+      ? profitAmount.div(totalRevenue).mul(100)
+      : new Decimal(0)
 
+    let healthStatus: ProjectHealthStatus = ProjectHealthStatus.UNKNOWN
     if (project.budget) {
-      const budgetUsage = totalPoValue.div(project.budget.toString()).mul(100).toNumber()
+      const budgetUsage = totalPoValue.div(project.budget).mul(100).toNumber()
+      const threshold = project.budgetAlertThreshold || 75
 
-      if (budgetUsage > 100 || project.profitMargin.toNumber() < 0) {
-        healthStatus = 'CRITICAL'
-      } else if (budgetUsage > (project.budgetAlertThreshold || 75) || project.profitMargin.toNumber() < 10) {
-        healthStatus = 'WARNING'
+      if (budgetUsage > 100 || profitMargin.toNumber() < 0) {
+        healthStatus = ProjectHealthStatus.CRITICAL
+      } else if (budgetUsage > threshold || profitMargin.toNumber() < 10) {
+        healthStatus = ProjectHealthStatus.WARNING
       } else {
-        healthStatus = 'HEALTHY'
+        healthStatus = ProjectHealthStatus.HEALTHY
       }
     }
 
     await prisma.project.update({
       where: { id: project.id },
       data: {
-        totalPoValue: totalPoValue,
+        totalPoValue,
+        totalCosts: totalPoValue,
+        profitAmount,
+        profitMargin,
         healthStatus
       }
     })

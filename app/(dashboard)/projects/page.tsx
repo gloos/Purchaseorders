@@ -34,6 +34,7 @@ export default function ProjectsPage() {
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [syncProgress, setSyncProgress] = useState<{ total: number; synced: number; failed: number } | null>(null)
   const [filters, setFilters] = useState({
     status: '',
     search: ''
@@ -66,24 +67,72 @@ export default function ProjectsPage() {
 
   const handleSync = async () => {
     setSyncing(true)
+    setSyncProgress({ total: 0, synced: 0, failed: 0 })
+
     try {
+      // Start the sync
       const response = await fetch('/api/projects/sync', {
         method: 'POST'
       })
 
-      if (response.ok) {
-        const result = await response.json()
-        alert(`Synced ${result.synced} projects successfully!`)
-        await fetchProjects()
-      } else {
+      if (!response.ok) {
         const error = await response.json()
         alert(`Sync failed: ${error.error}`)
+        setSyncing(false)
+        setSyncProgress(null)
+        return
       }
+
+      const result = await response.json()
+      const syncLogId = result.syncLogId
+
+      // Poll for sync status
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await fetch(`/api/projects/sync/${syncLogId}`)
+          if (statusResponse.ok) {
+            const status = await statusResponse.json()
+
+            setSyncProgress({
+              total: status.projectsTotal || 0,
+              synced: status.projectsSynced || 0,
+              failed: status.projectsFailed || 0
+            })
+
+            if (status.status === 'COMPLETED' || status.status === 'FAILED') {
+              clearInterval(pollInterval)
+              setSyncing(false)
+
+              if (status.status === 'COMPLETED') {
+                alert(`Sync completed! Synced ${status.projectsSynced} projects. ${status.projectsFailed > 0 ? `Failed: ${status.projectsFailed}` : ''}`)
+              } else {
+                alert(`Sync failed. Please try again.`)
+              }
+
+              setSyncProgress(null)
+              await fetchProjects()
+            }
+          }
+        } catch (error) {
+          console.error('Error polling sync status:', error)
+        }
+      }, 2000) // Poll every 2 seconds
+
+      // Clear interval after 10 minutes as a safety measure
+      setTimeout(() => {
+        clearInterval(pollInterval)
+        if (syncing) {
+          setSyncing(false)
+          setSyncProgress(null)
+          alert('Sync timed out. Please check the results and try again if needed.')
+        }
+      }, 600000)
+
     } catch (error) {
       console.error('Error syncing projects:', error)
       alert('Failed to sync projects')
-    } finally {
       setSyncing(false)
+      setSyncProgress(null)
     }
   }
 
@@ -158,7 +207,11 @@ export default function ProjectsPage() {
               disabled={syncing}
               className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
             >
-              {syncing ? '🔄 Syncing...' : '🔄 Sync with FreeAgent'}
+              {syncing && syncProgress ?
+                `🔄 Syncing... ${syncProgress.synced}/${syncProgress.total}` :
+                syncing ? '🔄 Starting sync...' :
+                '🔄 Sync with FreeAgent'
+              }
             </button>
           </div>
         </div>
@@ -184,6 +237,27 @@ export default function ProjectsPage() {
             <option value="CANCELLED">Cancelled</option>
           </select>
         </div>
+
+        {/* Sync Progress Bar */}
+        {syncing && syncProgress && syncProgress.total > 0 && (
+          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                Syncing projects from FreeAgent...
+              </span>
+              <span className="text-sm text-blue-700 dark:text-blue-400">
+                {syncProgress.synced} / {syncProgress.total}
+                {syncProgress.failed > 0 && ` (${syncProgress.failed} failed)`}
+              </span>
+            </div>
+            <div className="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-2">
+              <div
+                className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(syncProgress.synced / syncProgress.total) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Batch Actions Bar */}
         {selectedProjects.size > 0 && (
