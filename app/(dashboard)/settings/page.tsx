@@ -6,13 +6,22 @@ import { useUser } from '@/lib/hooks/use-user'
 import Link from 'next/link'
 
 export default function SettingsPage() {
-  const { hasPermission } = useUser()
+  const { hasPermission, loading: userLoading } = useUser()
   const router = useRouter()
 
-  // Redirect if user doesn't have any settings permissions
-  if (!hasPermission('canManageUsers') && !hasPermission('canManageOrganization')) {
+  // Redirect if user doesn't have any settings permissions (after loading)
+  if (!userLoading && !hasPermission('canManageUsers') && !hasPermission('canManageOrganization')) {
     router.push('/dashboard')
     return null
+  }
+
+  // Show loading state while checking permissions
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+      </div>
+    )
   }
 
   return (

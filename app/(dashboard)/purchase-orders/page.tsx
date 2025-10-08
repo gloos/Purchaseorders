@@ -44,7 +44,7 @@ const statusLabels: Record<POStatus, string> = {
 }
 
 export default function PurchaseOrdersPage() {
-  const { hasPermission } = useUser()
+  const { hasPermission, loading: userLoading } = useUser()
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('')
@@ -80,7 +80,7 @@ export default function PurchaseOrdersPage() {
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Purchase Orders</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">Manage your purchase orders</p>
         </div>
-        {hasPermission('canCreatePO') && (
+        {!userLoading && hasPermission('canCreatePO') && (
           <Link
             href="/purchase-orders/new"
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
@@ -112,7 +112,7 @@ export default function PurchaseOrdersPage() {
       ) : purchaseOrders.length === 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-12 text-center">
           <p className="text-slate-600 dark:text-slate-400 mb-4">No purchase orders found</p>
-          {hasPermission('canCreatePO') && (
+          {!userLoading && hasPermission('canCreatePO') && (
             <Link
               href="/purchase-orders/new"
               className="text-blue-600 hover:text-blue-700 font-medium"

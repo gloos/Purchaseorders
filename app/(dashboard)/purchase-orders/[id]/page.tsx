@@ -79,7 +79,7 @@ const statusLabels: Record<POStatus, string> = {
 }
 
 export default function PurchaseOrderDetailPage() {
-  const { hasPermission } = useUser()
+  const { hasPermission, loading: userLoading } = useUser()
   const params = useParams()
   const router = useRouter()
   const [po, setPo] = useState<PurchaseOrder | null>(null)
@@ -219,7 +219,7 @@ export default function PurchaseOrderDetailPage() {
             <p className="text-slate-600 dark:text-slate-400 mt-1">{po.title}</p>
           </div>
           <div className="flex gap-2">
-            {hasPermission('canViewPO') && (
+            {!userLoading && hasPermission('canViewPO') && (
               <a
                 href={`/api/purchase-orders/${po.id}/pdf`}
                 target="_blank"
@@ -230,7 +230,7 @@ export default function PurchaseOrderDetailPage() {
                 Download PDF
               </a>
             )}
-            {hasPermission('canSendPO') && (
+            {!userLoading && hasPermission('canSendPO') && (
               <button
                 onClick={handleSendEmail}
                 disabled={sending || !po.supplierEmail}
@@ -240,7 +240,7 @@ export default function PurchaseOrderDetailPage() {
                 {sending ? 'Sending...' : 'Send Email'}
               </button>
             )}
-            {canCreateBill && hasPermission('canEditPO') && (
+            {!userLoading && canCreateBill && hasPermission('canEditPO') && (
               <button
                 onClick={() => setShowBillModal(true)}
                 className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
@@ -262,7 +262,7 @@ export default function PurchaseOrderDetailPage() {
                 </svg>
               </a>
             )}
-            {hasPermission('canEditPO') && (
+            {!userLoading && hasPermission('canEditPO') && (
               <Link
                 href={`/purchase-orders/${po.id}/edit`}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
@@ -270,7 +270,7 @@ export default function PurchaseOrderDetailPage() {
                 Edit
               </Link>
             )}
-            {hasPermission('canDeletePO') && (
+            {!userLoading && hasPermission('canDeletePO') && (
               <button
                 onClick={handleDelete}
                 disabled={deleting}
