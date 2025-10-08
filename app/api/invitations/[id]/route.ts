@@ -50,15 +50,20 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // 6. Cancel invitation
-    await prisma.invitation.update({
-      where: { id },
-      data: {
-        status: 'CANCELLED'
-      }
+    // 6. Only allow cancelling pending invitations
+    if (invitation.status !== 'PENDING') {
+      return NextResponse.json(
+        { error: 'Only pending invitations can be cancelled' },
+        { status: 400 }
+      )
+    }
+
+    // 7. Delete the invitation (removes record completely to allow re-inviting)
+    await prisma.invitation.delete({
+      where: { id }
     })
 
-    // 7. Return success
+    // 8. Return success
     return NextResponse.json({
       message: 'Invitation cancelled successfully'
     })
