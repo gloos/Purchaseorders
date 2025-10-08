@@ -58,8 +58,14 @@ export async function GET() {
     console.error('Error fetching FreeAgent categories:', error)
     Sentry.captureException(error)
 
+    // Provide more specific error message
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch categories from FreeAgent'
+
     return NextResponse.json(
-      { error: 'Failed to fetch categories from FreeAgent' },
+      {
+        error: 'Failed to fetch categories from FreeAgent',
+        details: errorMessage
+      },
       { status: 500 }
     )
   }

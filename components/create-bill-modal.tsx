@@ -79,6 +79,7 @@ export function CreateBillModal({ isOpen, onClose, purchaseOrder, onSuccess }: C
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true)
+      setError('')
       const response = await fetch('/api/freeagent/categories')
 
       if (response.ok) {
@@ -94,11 +95,14 @@ export function CreateBillModal({ isOpen, onClose, purchaseOrder, onSuccess }: C
         // Try to get saved mappings
         fetchSavedMappings(allCategories)
       } else {
-        setError('Failed to fetch categories from FreeAgent')
+        const data = await response.json()
+        const errorMsg = data.details || data.error || 'Failed to fetch categories from FreeAgent'
+        setError(`FreeAgent Error: ${errorMsg}. Please check your FreeAgent connection in settings.`)
+        console.error('FreeAgent categories error:', data)
       }
     } catch (err) {
-      setError('Error fetching categories')
-      console.error(err)
+      setError('Network error: Unable to reach the server. Please try again.')
+      console.error('Categories fetch error:', err)
     } finally {
       setLoadingCategories(false)
     }
