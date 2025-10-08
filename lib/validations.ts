@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { POStatus, TaxMode } from '@prisma/client'
+import { POStatus, TaxMode, UserRole } from '@prisma/client'
 
 /**
  * Validation schemas for API request bodies
@@ -207,3 +207,18 @@ export function validateRequestBody<T>(schema: z.ZodSchema<T>, body: unknown) {
     data: result.data
   }
 }
+
+// ==================== Invitation Schemas ====================
+
+// Create invitation schema
+export const createInvitationSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Invalid email'),
+  role: z.nativeEnum(UserRole, { message: 'Invalid role' })
+})
+
+// Accept invitation schema
+export const acceptInvitationSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  name: z.string().min(1, 'Name is required').max(200, 'Name too long'),
+  password: z.string().min(8, 'Password must be at least 8 characters')
+})

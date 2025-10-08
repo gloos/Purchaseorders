@@ -28,8 +28,41 @@ model User {
   organization   Organization? @relation(fields: [organizationId], references: [id])
 
   createdPurchaseOrders PurchaseOrder[] @relation("CreatedPOs")
+  sentInvitations       Invitation[]     @relation("SentInvitations")
 
   @@map("users")
+}
+
+// Invitation model - tracks pending user invitations
+model Invitation {
+  id             String        @id @default(uuid())
+  email          String
+  role           UserRole      @default(VIEWER)
+  token          String        @unique @default(uuid())
+  expiresAt      DateTime
+  status         InvitationStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  acceptedAt     DateTime?
+
+  // Relations
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  invitedById    String
+  invitedBy      User          @relation("SentInvitations", fields: [invitedById], references: [id])
+
+  @@map("invitations")
+  @@index([organizationId])
+  @@index([email])
+  @@index([token])
+  @@unique([email, organizationId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
 }
 
 // Organization model - represents companies/organizations using the tool
@@ -74,6 +107,7 @@ model Organization {
   counters       Counter[]
   taxRates       TaxRate[]
   expenseCategoryMappings ExpenseCategoryMapping[]
+  invitations    Invitation[]
 
   @@map("organizations")
 }
