@@ -410,13 +410,14 @@ export default function NewPurchaseOrderPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Email
+                Email <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
                 name="supplierEmail"
                 value={formData.supplierEmail}
                 onChange={handleChange}
+                required
                 className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>

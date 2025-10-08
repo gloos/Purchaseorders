@@ -34,7 +34,7 @@ export const createPurchaseOrderSchema = z.object({
 
   // Supplier information - all required
   supplierName: z.string().min(1, 'Supplier name is required').max(200, 'Supplier name too long'),
-  supplierEmail: z.string().email('Invalid email').or(z.literal('')).optional().nullable().transform(val => val === '' ? null : val),
+  supplierEmail: z.string().min(1, 'Email is required').email('Invalid email'),
   supplierPhone: z.string().max(50, 'Phone number too long').optional().nullable().transform(val => val === '' ? null : val),
   supplierAddress: z.string().max(500, 'Address too long').optional().nullable().transform(val => val === '' ? null : val),
 
@@ -72,7 +72,7 @@ export const updatePurchaseOrderSchema = z.object({
   notes: z.string().max(2000, 'Notes too long').optional().nullable().transform(val => val === '' ? null : val),
 
   supplierName: z.string().min(1, 'Supplier name is required').max(200, 'Supplier name too long').optional(),
-  supplierEmail: z.string().email('Invalid email').or(z.literal('')).optional().nullable().transform(val => val === '' ? null : val),
+  supplierEmail: z.string().min(1, 'Email is required').email('Invalid email').optional(),
   supplierPhone: z.string().max(50, 'Phone number too long').optional().nullable().transform(val => val === '' ? null : val),
   supplierAddress: z.string().max(500, 'Address too long').optional().nullable().transform(val => val === '' ? null : val),
 
