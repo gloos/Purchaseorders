@@ -26,6 +26,24 @@ interface DashboardAnalytics {
     createdAt: string
     supplierName: string
   }>
+  billsReady: {
+    count: number
+    value: number
+  }
+  topSuppliers: Array<{
+    name: string
+    value: number
+  }>
+  outstandingAmounts: {
+    invoiced: number
+    sent: number
+    pendingApproval: number
+  }
+  freeAgentSync: {
+    isConnected: boolean
+    billsCreatedThisMonth: number
+    lastSync: string | null
+  }
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -160,18 +178,21 @@ export default function DashboardPage() {
 
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                <div className="flex-shrink-0 bg-teal-500 rounded-md p-3">
                   <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">
-                      Completed
+                      Bills Ready to Create
                     </dt>
                     <dd className="text-2xl font-semibold text-slate-900 dark:text-white">
-                      {analytics?.summary.statusCounts.RECEIVED || 0}
+                      {analytics?.billsReady.count || 0}
+                    </dd>
+                    <dd className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      £{(analytics?.billsReady.value || 0).toFixed(2)}
                     </dd>
                   </dl>
                 </div>
@@ -179,8 +200,65 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Outstanding Amounts */}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-8">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Pending Approval
+                  </p>
+                  <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
+                    £{(analytics?.outstandingAmounts.pendingApproval || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <svg className="h-8 w-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Sent (Committed)
+                  </p>
+                  <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
+                    £{(analytics?.outstandingAmounts.sent || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Invoiced (Awaiting Payment)
+                  </p>
+                  <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
+                    £{(analytics?.outstandingAmounts.invoiced || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <svg className="h-8 w-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Charts */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 mb-8">
             {/* Status Distribution Chart */}
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">PO Status Distribution</h2>
@@ -231,7 +309,56 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+
+            {/* Top Suppliers Chart */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Top 5 Suppliers</h2>
+              {analytics && analytics.topSuppliers.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={analytics.topSuppliers} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={100} />
+                    <Tooltip formatter={(value) => `£${Number(value).toFixed(2)}`} />
+                    <Bar dataKey="value" fill="#34d399" name="Total Spend" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-slate-500 dark:text-slate-400">
+                  No data available
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* FreeAgent Sync Status */}
+          {analytics?.freeAgentSync.isConnected && (
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 mb-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">FreeAgent Sync Status</h2>
+                  <div className="flex items-center gap-6 mt-4">
+                    <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Bills Created This Month</p>
+                      <p className="text-2xl font-semibold text-slate-900 dark:text-white">{analytics.freeAgentSync.billsCreatedThisMonth}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Last Sync</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">
+                        {analytics.freeAgentSync.lastSync
+                          ? new Date(analytics.freeAgentSync.lastSync).toLocaleString()
+                          : 'Never'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-green-600 dark:text-green-400">Connected</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Recent Activity */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow">

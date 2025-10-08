@@ -17,6 +17,9 @@ export async function GET() {
         totalAmount: true,
         orderDate: true,
         createdAt: true,
+        supplierName: true,
+        freeAgentBillId: true,
+        freeAgentBillCreatedAt: true,
       }
     })
 
@@ -78,6 +81,69 @@ export async function GET() {
       take: 10
     })
 
+    // 1. Bills ready to create (INVOICED without FreeAgent bill)
+    const billsReadyToCreate = purchaseOrders.filter(
+      po => po.status === 'INVOICED' && !po.freeAgentBillId
+    )
+    const billsReadyCount = billsReadyToCreate.length
+    const billsReadyValue = billsReadyToCreate.reduce(
+      (sum, po) => sum + parseFloat(po.totalAmount.toString()), 0
+    )
+
+    // 2. Supplier spending breakdown (top 5)
+    const supplierSpending = purchaseOrders.reduce((acc, po) => {
+      const supplier = po.supplierName || 'Unknown Supplier'
+      if (!acc[supplier]) {
+        acc[supplier] = 0
+      }
+      acc[supplier] += parseFloat(po.totalAmount.toString())
+      return acc
+    }, {} as Record<string, number>)
+
+    const topSuppliers = Object.entries(supplierSpending)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5)
+
+    // 3. Outstanding amounts by status
+    const outstandingAmounts = {
+      invoiced: purchaseOrders
+        .filter(po => po.status === 'INVOICED')
+        .reduce((sum, po) => sum + parseFloat(po.totalAmount.toString()), 0),
+      sent: purchaseOrders
+        .filter(po => po.status === 'SENT')
+        .reduce((sum, po) => sum + parseFloat(po.totalAmount.toString()), 0),
+      pendingApproval: purchaseOrders
+        .filter(po => po.status === 'PENDING_APPROVAL')
+        .reduce((sum, po) => sum + parseFloat(po.totalAmount.toString()), 0)
+    }
+
+    // 9. FreeAgent sync status
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    const billsCreatedThisMonth = purchaseOrders.filter(
+      po => po.freeAgentBillCreatedAt && new Date(po.freeAgentBillCreatedAt) >= startOfMonth
+    ).length
+
+    const lastBillSync = purchaseOrders
+      .filter(po => po.freeAgentBillCreatedAt)
+      .sort((a, b) =>
+        new Date(b.freeAgentBillCreatedAt!).getTime() - new Date(a.freeAgentBillCreatedAt!).getTime()
+      )[0]?.freeAgentBillCreatedAt || null
+
+    // Check organization for FreeAgent connection
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { freeAgentAccessToken: true }
+    })
+
+    const freeAgentSync = {
+      isConnected: !!organization?.freeAgentAccessToken,
+      billsCreatedThisMonth,
+      lastSync: lastBillSync
+    }
+
     return NextResponse.json({
       summary: {
         totalPOs,
@@ -88,7 +154,14 @@ export async function GET() {
       recentActivity: recentActivity.map(po => ({
         ...po,
         totalAmount: parseFloat(po.totalAmount.toString())
-      }))
+      })),
+      billsReady: {
+        count: billsReadyCount,
+        value: billsReadyValue
+      },
+      topSuppliers,
+      outstandingAmounts,
+      freeAgentSync
     })
   } catch (error) {
     console.error('Error fetching dashboard analytics:', error)
