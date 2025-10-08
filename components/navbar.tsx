@@ -85,6 +85,16 @@ export function Navbar() {
               Purchase Orders
             </Link>
             <Link
+              href="/projects"
+              className={`text-sm ${
+                isActive('/projects')
+                  ? 'text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Projects
+            </Link>
+            <Link
               href="/freeagent/contacts"
               className={`text-sm ${
                 isActive('/freeagent/contacts')

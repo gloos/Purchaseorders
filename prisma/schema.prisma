@@ -29,6 +29,8 @@ model User {
 
   createdPurchaseOrders PurchaseOrder[] @relation("CreatedPOs")
   sentInvitations       Invitation[]     @relation("SentInvitations")
+  projectTeamMemberships ProjectTeamMember[]
+  uploadedDocuments     ProjectDocument[]
 
   @@map("users")
 }
@@ -108,6 +110,8 @@ model Organization {
   taxRates       TaxRate[]
   expenseCategoryMappings ExpenseCategoryMapping[]
   invitations    Invitation[]
+  projects       Project[]
+  projectSyncLogs ProjectSyncLog[]
 
   @@map("organizations")
 }
@@ -251,6 +255,9 @@ model PurchaseOrder {
   createdById    String
   createdBy      User      @relation("CreatedPOs", fields: [createdById], references: [id])
 
+  projectId      String?
+  project        Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
   lineItems      POLineItem[]
 
   @@map("purchase_orders")
@@ -258,6 +265,7 @@ model PurchaseOrder {
   @@index([organizationId, status]) // Optimize queries filtering by org and status
   @@index([organizationId, orderDate]) // Optimize queries filtering by org and date
   @@index([organizationId]) // Keep for general org queries
+  @@index([projectId]) // Optimize queries filtering by project
 }
 
 // Purchase Order Line Item model
@@ -310,4 +318,144 @@ model ExpenseCategoryMapping {
   @@unique([organizationId, keyword])
   @@map("expense_category_mappings")
   @@index([organizationId])
+}
+
+// Project Management Models
+
+model Project {
+  id                    String              @id @default(uuid())
+  freeAgentId          String?             @unique
+  name                 String
+  code                 String?
+  reference            String?
+  status               ProjectStatus       @default(ACTIVE)
+  healthStatus         ProjectHealthStatus @default(UNKNOWN)
+  description          String?
+  currency             String              @default("GBP")
+
+  // Financial fields
+  budget               Decimal?            @db.Decimal(10, 2)
+  budgetAlertThreshold Int?               @default(75)
+  totalRevenue         Decimal            @default(0) @db.Decimal(10, 2)
+  totalCosts           Decimal            @default(0) @db.Decimal(10, 2)
+  totalPoValue         Decimal            @default(0) @db.Decimal(10, 2)
+  profitAmount         Decimal            @default(0) @db.Decimal(10, 2)
+  profitMargin         Decimal            @default(0) @db.Decimal(5, 2)
+
+  // Client information
+  clientName           String?
+  clientFreeAgentId    String?
+  clientEmail          String?
+
+  // Dates
+  startDate            DateTime?
+  endDate              DateTime?
+  completedAt          DateTime?
+  cancelledAt          DateTime?
+
+  // Sync metadata
+  lastSyncedAt         DateTime?
+  syncError            String?
+  freeAgentUrl         String?
+  freeAgentCreatedAt   DateTime?
+  freeAgentUpdatedAt   DateTime?
+
+  // System fields
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  // Relations
+  organizationId       String
+  organization         Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchaseOrders       PurchaseOrder[]
+  teamMembers          ProjectTeamMember[]
+  milestones           ProjectMilestone[]
+  documents            ProjectDocument[]
+
+  @@map("projects")
+  @@index([organizationId])
+  @@index([status])
+  @@index([organizationId, status])
+  @@index([clientFreeAgentId])
+}
+
+model ProjectTeamMember {
+  id          String   @id @default(uuid())
+  projectId   String
+  userId      String
+  role        String?
+  assignedAt  DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_team_members")
+  @@index([projectId])
+  @@index([userId])
+}
+
+model ProjectMilestone {
+  id          String    @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_milestones")
+  @@index([projectId])
+}
+
+model ProjectDocument {
+  id           String   @id @default(uuid())
+  projectId    String
+  name         String
+  url          String
+  fileType     String?
+  fileSize     Int?
+  uploadedById String
+  uploadedAt   DateTime @default(now())
+
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+
+  @@map("project_documents")
+  @@index([projectId])
+}
+
+model ProjectSyncLog {
+  id             String       @id @default(uuid())
+  organizationId String
+  syncType       String
+  status         String
+  projectsSynced Int?         @default(0)
+  projectsFailed Int?         @default(0)
+  errorDetails   Json?
+  startedAt      DateTime     @default(now())
+  completedAt    DateTime?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("project_sync_logs")
+  @@index([organizationId])
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  HIDDEN
+  ON_HOLD
+}
+
+enum ProjectHealthStatus {
+  HEALTHY
+  WARNING
+  CRITICAL
+  UNKNOWN
 }

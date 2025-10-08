@@ -276,4 +276,36 @@ export class FreeAgentClient {
     // Create new contact
     return await this.createContact(contactData)
   }
+
+  // Get all projects (handles pagination)
+  async getProjects(): Promise<any[]> {
+    const allProjects: any[] = []
+    let page = 1
+    let hasMore = true
+
+    while (hasMore) {
+      const response = await this.request(`/projects?page=${page}&per_page=100&view=all`)
+      const projects = response.projects || []
+
+      if (projects.length > 0) {
+        allProjects.push(...projects)
+        page++
+
+        // If we got fewer than 100, we're on the last page
+        if (projects.length < 100) {
+          hasMore = false
+        }
+      } else {
+        hasMore = false
+      }
+    }
+
+    return allProjects
+  }
+
+  // Get a single project
+  async getProject(projectUrl: string): Promise<any> {
+    const response = await this.request(projectUrl.replace(FREEAGENT_API_URL, ''))
+    return response.project
+  }
 }

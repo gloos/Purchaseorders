@@ -30,11 +30,18 @@ interface TaxRate {
   isActive: boolean
 }
 
+interface Project {
+  id: string
+  name: string
+  status: string
+}
+
 export default function NewPurchaseOrderPage() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [contacts, setContacts] = useState<Contact[]>([])
   const [taxRates, setTaxRates] = useState<TaxRate[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [selectedContactId, setSelectedContactId] = useState('')
   const [formData, setFormData] = useState({
     title: '',
@@ -50,7 +57,8 @@ export default function NewPurchaseOrderPage() {
     supplierEmail: '',
     supplierPhone: '',
     supplierAddress: '',
-    notes: ''
+    notes: '',
+    projectId: ''
   })
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
@@ -60,6 +68,7 @@ export default function NewPurchaseOrderPage() {
   useEffect(() => {
     fetchContacts()
     fetchTaxRates()
+    fetchProjects()
   }, [])
 
   const fetchContacts = async () => {
@@ -93,6 +102,18 @@ export default function NewPurchaseOrderPage() {
       }
     } catch (error) {
       console.error('Error fetching tax rates:', error)
+    }
+  }
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('/api/projects?status=ACTIVE')
+      if (response.ok) {
+        const data = await response.json()
+        setProjects(data.projects || [])
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error)
     }
   }
 
@@ -371,6 +392,37 @@ export default function NewPurchaseOrderPage() {
                 className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Project Selection */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Project</h2>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Assign to Project (Optional)
+            </label>
+            <select
+              name="projectId"
+              value={formData.projectId}
+              onChange={handleChange}
+              className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+            >
+              <option value="">-- No project --</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Associate this PO with a project for tracking costs and profitability
+            </p>
+            {projects.length === 0 && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                No active projects. <Link href="/projects" className="text-blue-600 underline">Sync projects from FreeAgent</Link>
+              </p>
+            )}
           </div>
         </div>
 
