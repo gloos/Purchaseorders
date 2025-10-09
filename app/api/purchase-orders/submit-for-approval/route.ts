@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendApprovalRequestEmail } from '@/lib/email/approval-notifications'
+import { generatePONumber } from '@/lib/counter-helpers'
 import * as Sentry from '@sentry/nextjs'
 
 // POST /api/purchase-orders/submit-for-approval
@@ -49,12 +50,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid approver selected' }, { status: 400 })
     }
 
+    // Generate PO number if not provided (atomic, race-condition safe)
+    const poNumber = purchaseOrderData.poNumber || await generatePONumber(user.organizationId!)
+
     // Use a transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
       // Create the PO with PENDING_APPROVAL status
       const purchaseOrder = await tx.purchaseOrder.create({
         data: {
           ...purchaseOrderData,
+          poNumber,
           status: 'PENDING_APPROVAL',
           organizationId: user.organizationId!,
           createdById: user.id,
