@@ -28,8 +28,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // 3. Check permissions - only MANAGER and ADMIN can cancel invitations
-    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN') {
+    // 3. Check permissions - only MANAGER, ADMIN, and SUPER_ADMIN can cancel invitations
+    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN' && dbUser.role !== 'SUPER_ADMIN') {
       return NextResponse.json(
         { error: 'Insufficient permissions. Only Managers and Admins can cancel invitations.' },
         { status: 403 }

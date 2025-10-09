@@ -38,8 +38,8 @@ export async function POST(
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // 3. Check permissions - only MANAGER and ADMIN can create bills
-    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN') {
+    // 3. Check permissions - only MANAGER, ADMIN, and SUPER_ADMIN can create bills
+    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN' && dbUser.role !== 'SUPER_ADMIN') {
       return NextResponse.json(
         { error: 'Insufficient permissions. Only Managers and Admins can create bills.' },
         { status: 403 }
@@ -291,7 +291,7 @@ export async function GET(
 
     // 4. Check eligibility
     const canCreate = (
-      (dbUser.role === 'MANAGER' || dbUser.role === 'ADMIN') &&
+      (dbUser.role === 'MANAGER' || dbUser.role === 'ADMIN' || dbUser.role === 'SUPER_ADMIN') &&
       po.status === 'INVOICED' &&
       !po.freeAgentBillId &&
       !!dbUser.organization?.freeAgentAccessToken
@@ -300,7 +300,7 @@ export async function GET(
     return NextResponse.json({
       canCreate,
       reasons: {
-        hasPermission: dbUser.role === 'MANAGER' || dbUser.role === 'ADMIN',
+        hasPermission: dbUser.role === 'MANAGER' || dbUser.role === 'ADMIN' || dbUser.role === 'SUPER_ADMIN',
         isInvoiced: po.status === 'INVOICED',
         noBillExists: !po.freeAgentBillId,
         freeAgentConnected: !!dbUser.organization?.freeAgentAccessToken

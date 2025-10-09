@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // Only MANAGER and ADMIN can save mappings
-    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN') {
+    // Only MANAGER, ADMIN, and SUPER_ADMIN can save mappings
+    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN' && dbUser.role !== 'SUPER_ADMIN') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -171,8 +171,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // Only MANAGER and ADMIN can delete mappings
-    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN') {
+    // Only MANAGER, ADMIN, and SUPER_ADMIN can delete mappings
+    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN' && dbUser.role !== 'SUPER_ADMIN') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
