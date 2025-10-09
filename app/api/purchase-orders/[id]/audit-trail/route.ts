@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // GET /api/purchase-orders/[id]/audit-trail
 // Get approval audit trail for a specific purchase order
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
