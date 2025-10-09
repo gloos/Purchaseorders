@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
 import { CreateBillModal } from '@/components/create-bill-modal'
 import { AuditTrail } from '@/components/audit-trail'
-
-type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'INVOICED' | 'CANCELLED'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { StatusBadge } from '@/components/ui/Badge'
+import { POStatus } from '@prisma/client'
 
 interface LineItem {
   id: string
@@ -57,26 +58,6 @@ interface PurchaseOrder {
     freeAgentAccessToken?: string | null
   }
   lineItems: LineItem[]
-}
-
-const statusColors: Record<POStatus, string> = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  PENDING_APPROVAL: 'bg-yellow-100 text-yellow-800',
-  APPROVED: 'bg-green-100 text-green-800',
-  SENT: 'bg-blue-100 text-blue-800',
-  RECEIVED: 'bg-purple-100 text-purple-800',
-  INVOICED: 'bg-teal-100 text-teal-800',
-  CANCELLED: 'bg-red-100 text-red-800'
-}
-
-const statusLabels: Record<POStatus, string> = {
-  DRAFT: 'Draft',
-  PENDING_APPROVAL: 'Pending Approval',
-  APPROVED: 'Approved',
-  SENT: 'Sent',
-  RECEIVED: 'Received',
-  INVOICED: 'Invoiced',
-  CANCELLED: 'Cancelled'
 }
 
 export default function PurchaseOrderDetailPage() {
@@ -190,13 +171,8 @@ export default function PurchaseOrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Navbar />
-        <div className="p-8">
-          <div className="text-center py-12">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          </div>
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
       </div>
     )
   }
@@ -206,123 +182,130 @@ export default function PurchaseOrderDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Navbar />
-      <div className="p-8">
-        {/* Header */}
-        <div className="mb-6">
-        <Link href="/purchase-orders" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
-          ← Back to Purchase Orders
-        </Link>
-        <div className="flex justify-between items-start">
-          <div>
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <Link href="/purchase-orders" className="text-blue-600 hover:text-blue-700 mb-4 inline-flex items-center gap-2">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Purchase Orders
+      </Link>
+
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-8">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{po.poNumber}</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-1">{po.title}</p>
+            <StatusBadge status={po.status} size="md" />
           </div>
-          <div className="flex gap-2">
-            {!userLoading && hasPermission('canViewPO') && (
-              po.status === 'PENDING_APPROVAL' ? (
-                <button
-                  disabled
-                  className="bg-purple-600 text-white font-medium py-2 px-4 rounded-lg opacity-50 cursor-not-allowed"
-                  title="PDF download disabled while pending approval"
-                >
+          <p className="text-slate-600 dark:text-slate-400">{po.title}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {!userLoading && hasPermission('canViewPO') && (
+            po.status === 'PENDING_APPROVAL' ? (
+              <Button
+                variant="secondary"
+                size="md"
+                disabled
+                title="PDF download disabled while pending approval"
+              >
+                Download PDF
+              </Button>
+            ) : (
+              <a href={`/api/purchase-orders/${po.id}/pdf`} target="_blank" rel="noopener noreferrer">
+                <Button variant="secondary" size="md" title="Download PDF">
                   Download PDF
-                </button>
-              ) : (
-                <a
-                  href={`/api/purchase-orders/${po.id}/pdf`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                  title="Download PDF"
-                >
-                  Download PDF
-                </a>
-              )
-            )}
-            {!userLoading && hasPermission('canSendPO') && (
-              <button
-                onClick={handleSendEmail}
-                disabled={sending || !po.supplierEmail || po.status === 'PENDING_APPROVAL'}
-                className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={
-                  po.status === 'PENDING_APPROVAL'
-                    ? 'Email sending disabled while pending approval'
-                    : !po.supplierEmail
-                      ? 'Supplier email required'
-                      : 'Send purchase order to supplier'
-                }
-              >
-                {sending ? 'Sending...' : 'Send Email'}
-              </button>
-            )}
-            {!userLoading && canCreateBill && hasPermission('canEditPO') && (
-              <button
-                onClick={() => setShowBillModal(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                title="Create bill in FreeAgent"
-              >
-                Create FreeAgent Bill
-              </button>
-            )}
-            {po.freeAgentBillUrl && (
-              <a
-                href={po.freeAgentBillUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors inline-flex items-center"
-              >
-                View Bill in FreeAgent
-                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                </Button>
+              </a>
+            )
+          )}
+          {!userLoading && hasPermission('canSendPO') && (
+            <Button
+              variant="success"
+              size="md"
+              onClick={handleSendEmail}
+              disabled={sending || !po.supplierEmail || po.status === 'PENDING_APPROVAL'}
+              isLoading={sending}
+              title={
+                po.status === 'PENDING_APPROVAL'
+                  ? 'Email sending disabled while pending approval'
+                  : !po.supplierEmail
+                    ? 'Supplier email required'
+                    : 'Send purchase order to supplier'
+              }
+            >
+              Send Email
+            </Button>
+          )}
+          {!userLoading && canCreateBill && hasPermission('canEditPO') && (
+            <Button
+              variant="success"
+              size="md"
+              onClick={() => setShowBillModal(true)}
+              title="Create bill in FreeAgent"
+            >
+              Create FreeAgent Bill
+            </Button>
+          )}
+          {po.freeAgentBillUrl && (
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => window.open(po.freeAgentBillUrl, '_blank', 'noopener,noreferrer')}
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </a>
-            )}
-            {!userLoading && hasPermission('canEditPO') && (
-              <Link
-                href={`/purchase-orders/${po.id}/edit`}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-              >
+              }
+            >
+              View Bill in FreeAgent
+            </Button>
+          )}
+          {!userLoading && hasPermission('canEditPO') && (
+            <Link href={`/purchase-orders/${po.id}/edit`}>
+              <Button variant="secondary" size="md">
                 Edit
-              </Link>
-            )}
-            {!userLoading && hasPermission('canDeletePO') && (
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
-              </button>
-            )}
+              </Button>
+            </Link>
+          )}
+          {!userLoading && hasPermission('canDeletePO') && (
+            <Button
+              variant="danger"
+              size="md"
+              onClick={handleDelete}
+              disabled={deleting}
+              isLoading={deleting}
+            >
+              Delete
+            </Button>
+          )}
           </div>
         </div>
       </div>
 
       {/* Message Display */}
       {message && (
-        <div className={`mb-6 p-4 rounded-lg ${
-          message.startsWith('Error')
-            ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
-            : 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200'
-        }`}>
-          {message}
-        </div>
+        <Card
+          padding="md"
+          className={`mb-6 ${
+            message.startsWith('Error')
+              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+          }`}
+        >
+          <p className={message.startsWith('Error')
+            ? 'text-red-800 dark:text-red-200'
+            : 'text-green-800 dark:text-green-200'
+          }>
+            {message}
+          </p>
+        </Card>
       )}
-
-      {/* Status Badge */}
-      <div className="mb-6">
-        <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${statusColors[po.status]}`}>
-          {statusLabels[po.status]}
-        </span>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Purchase Order Info */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <Card padding="lg">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Purchase Order Details</h2>
             <dl className="grid grid-cols-2 gap-4">
               <div>
@@ -362,10 +345,10 @@ export default function PurchaseOrderDetailPage() {
                 </div>
               )}
             </dl>
-          </div>
+          </Card>
 
           {/* Line Items */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <Card padding="lg">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Line Items</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
@@ -436,13 +419,13 @@ export default function PurchaseOrderDetailPage() {
                 </tfoot>
               </table>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Supplier Info */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <Card padding="lg">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Supplier</h2>
             <dl className="space-y-3">
               <div>
@@ -474,17 +457,17 @@ export default function PurchaseOrderDetailPage() {
                 </div>
               )}
             </dl>
-          </div>
+          </Card>
 
           {/* Organization Info */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <Card padding="lg">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Organization</h2>
             <p className="text-sm text-slate-900 dark:text-white">{po.organization.name}</p>
-          </div>
+          </Card>
 
           {/* Invoice Status */}
           {(po.status === 'SENT' || po.status === 'INVOICED') && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+            <Card padding="lg">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Invoice</h2>
               {po.invoiceUrl && po.invoiceReceivedAt ? (
                 <div className="space-y-3">
@@ -500,7 +483,9 @@ export default function PurchaseOrderDetailPage() {
                       {format(new Date(po.invoiceReceivedAt), 'MMM d, yyyy h:mm a')}
                     </dd>
                   </div>
-                  <button
+                  <Button
+                    variant="primary"
+                    size="md"
                     onClick={async () => {
                       try {
                         const response = await fetch(`/api/purchase-orders/${po.id}/invoice`)
@@ -522,10 +507,10 @@ export default function PurchaseOrderDetailPage() {
                         alert('Failed to download invoice')
                       }
                     }}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                    className="w-full"
                   >
                     Download Invoice
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -548,7 +533,7 @@ export default function PurchaseOrderDetailPage() {
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           )}
         </div>
 
