@@ -30,6 +30,7 @@ const STATUS_COLORS = {
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
+  SUPER_ADMIN: 'Super Administrator',
   ADMIN: 'Administrator',
   MANAGER: 'Manager',
   VIEWER: 'Viewer'

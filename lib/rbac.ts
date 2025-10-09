@@ -3,6 +3,29 @@ import { prisma } from './prisma'
 
 // Permission definitions for each role
 export const PERMISSIONS = {
+  SUPER_ADMIN: {
+    // User management
+    canManageUsers: true,
+    canInviteUsers: true,
+    canRemoveUsers: true,
+    canChangeUserRoles: true,
+
+    // Organization settings
+    canManageOrganization: true,
+    canConnectIntegrations: true,
+
+    // Purchase orders
+    canCreatePO: true,
+    canEditPO: true,
+    canDeletePO: true,
+    canApprovePO: true,
+    canSendPO: true,
+    canViewPO: true,
+
+    // Contacts
+    canSyncContacts: true,
+    canManageContacts: true,
+  },
   ADMIN: {
     // User management
     canManageUsers: true,
@@ -109,17 +132,17 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
 }
 
 /**
- * Check if a user is an admin
+ * Check if a user is an admin (includes SUPER_ADMIN)
  */
 export function isAdmin(role: UserRole): boolean {
-  return role === 'ADMIN'
+  return role === 'SUPER_ADMIN' || role === 'ADMIN'
 }
 
 /**
  * Check if a user is a manager or higher
  */
 export function isManagerOrHigher(role: UserRole): boolean {
-  return role === 'ADMIN' || role === 'MANAGER'
+  return role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'MANAGER'
 }
 
 /**

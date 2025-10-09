@@ -16,12 +16,14 @@ interface User {
 }
 
 const roleLabels: Record<UserRole, string> = {
+  SUPER_ADMIN: 'Super Admin',
   ADMIN: 'Admin',
   MANAGER: 'Manager',
   VIEWER: 'Viewer'
 }
 
 const roleColors: Record<UserRole, string> = {
+  SUPER_ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
   ADMIN: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200',
   MANAGER: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
   VIEWER: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200'
