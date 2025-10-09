@@ -70,6 +70,7 @@ export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null)
+  const [userRoleLoading, setUserRoleLoading] = useState(true)
 
   useEffect(() => {
     fetchAnalytics()
@@ -94,6 +95,7 @@ export default function DashboardPage() {
 
   const fetchUserRole = async () => {
     try {
+      setUserRoleLoading(true)
       const response = await fetch('/api/me')
       if (response.ok) {
         const data = await response.json()
@@ -101,6 +103,8 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching user role:', error)
+    } finally {
+      setUserRoleLoading(false)
     }
   }
 
@@ -373,7 +377,7 @@ export default function DashboardPage() {
           )}
 
           {/* Approval Widget - Only for ADMIN and SUPER_ADMIN */}
-          {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+          {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
             <div className="mb-8">
               <ApprovalWidget />
             </div>
