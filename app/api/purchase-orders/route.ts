@@ -102,6 +102,35 @@ export async function POST(request: Request) {
     const taxRate = poData.taxRate || 0
     const { subtotalAmount, taxAmount, totalAmount } = calculateTax(lineItems, taxMode, taxRate)
 
+    // --- APPROVAL WORKFLOW VALIDATION ---
+    // Prevent MANAGER users from bypassing the approval workflow by directly calling this endpoint
+    // instead of /api/purchase-orders/submit-for-approval
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { approvalThreshold: true, autoApproveAdmin: true }
+    })
+
+    const threshold = organization?.approvalThreshold ?? 50
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
+    const autoApprove = organization?.autoApproveAdmin ?? true
+
+    // A non-admin user is trying to directly create a PO over the threshold
+    if (!isAdmin && subtotalAmount >= threshold) {
+      return NextResponse.json(
+        { error: `Purchase orders of ${subtotalAmount} or more require approval. Please submit for approval instead.` },
+        { status: 403 }
+      )
+    }
+
+    // An admin is creating a PO but auto-approval is disabled
+    if (isAdmin && !autoApprove && subtotalAmount >= threshold) {
+      return NextResponse.json(
+        { error: `This organization requires all POs over the threshold to go through the approval workflow.` },
+        { status: 403 }
+      )
+    }
+    // --- END APPROVAL WORKFLOW VALIDATION ---
+
     const purchaseOrder = await prisma.purchaseOrder.create({
       data: {
         ...poData,

@@ -19,9 +19,9 @@ export async function PATCH(
     const { role } = body
 
     // Validate role
-    if (!role || !['ADMIN', 'MANAGER', 'VIEWER'].includes(role)) {
+    if (!role || !['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VIEWER'].includes(role)) {
       return NextResponse.json(
-        { error: 'Invalid role. Must be ADMIN, MANAGER, or VIEWER' },
+        { error: 'Invalid role. Must be SUPER_ADMIN, ADMIN, MANAGER, or VIEWER' },
         { status: 400 }
       )
     }
@@ -44,6 +44,23 @@ export async function PATCH(
         { error: 'You cannot change your own role' },
         { status: 400 }
       )
+    }
+
+    // Prevent demoting the last admin - check if target user is an admin and is the last one
+    if (targetUser.role === 'ADMIN' || targetUser.role === 'SUPER_ADMIN') {
+      const adminCount = await prisma.user.count({
+        where: {
+          organizationId,
+          role: { in: ['ADMIN', 'SUPER_ADMIN'] }
+        }
+      })
+
+      if (adminCount <= 1) {
+        return NextResponse.json(
+          { error: 'Cannot change the role of the last administrator. At least one admin must remain.' },
+          { status: 400 }
+        )
+      }
     }
 
     // Update user role
