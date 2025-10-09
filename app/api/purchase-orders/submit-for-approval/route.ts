@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { sendApprovalRequestEmail } from '@/lib/email/approval-notifications'
 import { generatePONumber } from '@/lib/counter-helpers'
 import { createPurchaseOrderSchema, validateRequestBody } from '@/lib/validations'
+import { calculateTax } from '@/lib/tax-helpers'
 import * as Sentry from '@sentry/nextjs'
 
 // POST /api/purchase-orders/submit-for-approval
@@ -49,6 +50,13 @@ export async function POST(request: Request) {
 
     const { lineItems, ...poData } = validation.data
 
+    // Calculate tax and totals using tax helper
+    // IMPORTANT: taxRate is snapshotted from the selected TaxRate at creation time
+    // This preserves accounting integrity - if the TaxRate is later modified, this PO remains unchanged
+    const taxMode = poData.taxMode || 'EXCLUSIVE'
+    const taxRate = poData.taxRate || 0
+    const { subtotalAmount, taxAmount, totalAmount } = calculateTax(lineItems, taxMode, taxRate)
+
     // Validate that the selected approver is an admin in the organization
     const approver = await prisma.user.findFirst({
       where: {
@@ -72,6 +80,9 @@ export async function POST(request: Request) {
         data: {
           ...poData,
           poNumber,
+          subtotalAmount,
+          taxAmount,
+          totalAmount,
           status: 'PENDING_APPROVAL',
           organizationId: user.organizationId!,
           createdById: user.id,
