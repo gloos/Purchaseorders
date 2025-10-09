@@ -153,7 +153,7 @@ export function AuditTrail({ purchaseOrderId }: AuditTrailProps) {
 
             {/* Timeline items */}
             <div className="space-y-6">
-              {auditTrail.map((action, index) => (
+              {auditTrail.map((action) => (
                 <div key={action.id} className="relative flex items-start gap-4">
                   {/* Timeline dot */}
                   <div
