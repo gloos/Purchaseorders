@@ -13,7 +13,7 @@ interface CompanyProfile {
 
 export function Navbar() {
   const pathname = usePathname()
-  const { hasPermission, loading: userLoading } = useUser()
+  const { hasPermission, loading: userLoading, role } = useUser()
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
 
   useEffect(() => {
@@ -94,16 +94,18 @@ export function Navbar() {
             >
               Contacts
             </Link>
-            <Link
-              href="/profile"
-              className={`text-sm ${
-                isActive('/profile')
-                  ? 'text-blue-600 dark:text-blue-400 font-medium'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Profile
-            </Link>
+            {!userLoading && role !== 'VIEWER' && (
+              <Link
+                href="/profile"
+                className={`text-sm ${
+                  isActive('/profile')
+                    ? 'text-blue-600 dark:text-blue-400 font-medium'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Profile
+              </Link>
+            )}
             {!userLoading && (hasPermission('canManageUsers') || hasPermission('canManageOrganization')) && (
               <Link
                 href="/settings"

@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
+import { useUser } from '@/lib/hooks/use-user'
 import Image from 'next/image'
 
 interface CompanyProfile {
@@ -23,6 +25,8 @@ interface CompanyProfile {
 }
 
 export default function ProfilePage() {
+  const router = useRouter()
+  const { role, loading: userLoading } = useUser()
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -46,8 +50,16 @@ export default function ProfilePage() {
   })
 
   useEffect(() => {
-    fetchProfile()
-  }, [])
+    // Redirect Viewers to dashboard
+    if (!userLoading && role === 'VIEWER') {
+      router.push('/dashboard')
+      return
+    }
+
+    if (!userLoading) {
+      fetchProfile()
+    }
+  }, [userLoading, role, router])
 
   const fetchProfile = async () => {
     try {

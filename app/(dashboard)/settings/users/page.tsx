@@ -30,7 +30,7 @@ const roleColors: Record<UserRole, string> = {
 }
 
 export default function UsersPage() {
-  const { hasPermission, loading: userLoading } = useUser()
+  const { hasPermission, loading: userLoading, role: userRole } = useUser()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -49,6 +49,21 @@ export default function UsersPage() {
 
     fetchUsers()
   }, [hasPermission, userLoading, router])
+
+  // Determine which role descriptions to show based on user's role
+  const shouldShowRoleDescription = (role: UserRole): boolean => {
+    if (!userRole) return false
+
+    const roleHierarchy: Record<UserRole, number> = {
+      'SUPER_ADMIN': 4,
+      'ADMIN': 3,
+      'MANAGER': 2,
+      'VIEWER': 1
+    }
+
+    // Show roles at or below the user's level
+    return roleHierarchy[role] <= roleHierarchy[userRole]
+  }
 
   const fetchUsers = async () => {
     try {
@@ -200,30 +215,38 @@ export default function UsersPage() {
         <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Role Permissions</h2>
           <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Super Admin</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                Platform owner with complete control over all features, user management, organization settings, and purchase order operations. Highest level of access.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-purple-800 dark:text-purple-200">Admin</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                Full access to all features including user management, organization settings, and all purchase order operations.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Manager</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                Can create, edit, approve, send, and delete purchase orders. Cannot manage users or organization settings.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">Viewer</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                Read-only access to view purchase orders. Cannot create, edit, or delete purchase orders.
-              </p>
-            </div>
+            {shouldShowRoleDescription('SUPER_ADMIN') && (
+              <div>
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Super Admin</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  Platform owner with complete control over all features, user management, organization settings, and purchase order operations. Highest level of access.
+                </p>
+              </div>
+            )}
+            {shouldShowRoleDescription('ADMIN') && (
+              <div>
+                <h3 className="text-sm font-medium text-purple-800 dark:text-purple-200">Admin</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  Full access to all features including user management, organization settings, and all purchase order operations.
+                </p>
+              </div>
+            )}
+            {shouldShowRoleDescription('MANAGER') && (
+              <div>
+                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Manager</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  Can create, edit, approve, send, and delete purchase orders. Cannot manage users or organization settings.
+                </p>
+              </div>
+            )}
+            {shouldShowRoleDescription('VIEWER') && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">Viewer</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  Read-only access to view purchase orders. Cannot create, edit, or delete purchase orders.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
