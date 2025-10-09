@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 interface ApprovalRequest {
@@ -29,7 +28,6 @@ interface ApprovalRequest {
 export function ApprovalWidget() {
   console.log('[ApprovalWidget] Component rendering...')
 
-  const router = useRouter()
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [routerReady, setRouterReady] = useState(false)
