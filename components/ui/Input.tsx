@@ -44,10 +44,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const textColor = 'text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500'
 
     // Icon padding
-    const paddingWithIcons = cn(
-      leftIcon && 'pl-10',
-      rightIcon && 'pr-10'
-    )
+    const iconPaddingClasses = [
+      leftIcon ? 'pl-10' : '',
+      rightIcon ? 'pr-10' : ''
+    ].filter(Boolean).join(' ')
 
     return (
       <div className="w-full">
@@ -77,7 +77,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               baseStyles,
               stateStyles,
               textColor,
-              paddingWithIcons,
+              iconPaddingClasses,
               className
             )}
             {...props}

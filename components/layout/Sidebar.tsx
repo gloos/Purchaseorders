@@ -17,6 +17,11 @@ interface CompanyProfile {
   logoUrl?: string | null
 }
 
+interface UserData {
+  name: string | null
+  email: string
+}
+
 interface SidebarProps {
   isOpen?: boolean
   onClose?: () => void
@@ -24,11 +29,13 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname()
-  const { hasPermission, loading: userLoading, role, user } = useUser()
+  const { hasPermission, loading: userLoading, role } = useUser()
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
+  const [user, setUser] = useState<UserData | null>(null)
 
   useEffect(() => {
     fetchProfile()
+    fetchUser()
   }, [])
 
   const fetchProfile = async () => {
@@ -40,6 +47,18 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       }
     } catch (error) {
       console.error('Error fetching profile:', error)
+    }
+  }
+
+  const fetchUser = async () => {
+    try {
+      const response = await fetch('/api/me')
+      if (response.ok) {
+        const data = await response.json()
+        setUser({ name: data.name, email: data.email })
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error)
     }
   }
 

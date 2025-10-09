@@ -22,9 +22,7 @@ export const createPurchaseOrderSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   description: z.string().max(2000, 'Description too long').optional().nullable().transform(val => val === '' ? null : val),
   status: z.nativeEnum(POStatus).optional().default('DRAFT' as POStatus),
-  currency: z.enum(CURRENCY_CODES as [string, ...string[]], {
-    errorMap: () => ({ message: 'Invalid currency code. Must be a FreeAgent-supported currency.' })
-  }).default('GBP'),
+  currency: z.enum(CURRENCY_CODES as [string, ...string[]]).default('GBP'),
 
   // Tax configuration
   taxMode: z.nativeEnum(TaxMode).optional().default('EXCLUSIVE' as TaxMode),
@@ -64,9 +62,7 @@ export const updatePurchaseOrderSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long').optional(),
   description: z.string().max(2000, 'Description too long').optional().nullable().transform(val => val === '' ? null : val),
   status: z.nativeEnum(POStatus).optional(),
-  currency: z.enum(CURRENCY_CODES as [string, ...string[]], {
-    errorMap: () => ({ message: 'Invalid currency code. Must be a FreeAgent-supported currency.' })
-  }).optional(),
+  currency: z.enum(CURRENCY_CODES as [string, ...string[]]).optional(),
 
   // Tax configuration
   taxMode: z.nativeEnum(TaxMode).optional(),
