@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendApprovalRequestEmail } from '@/lib/email/approval-notifications'
 import { generatePONumber } from '@/lib/counter-helpers'
+import { createPurchaseOrderSchema, validateRequestBody } from '@/lib/validations'
 import * as Sentry from '@sentry/nextjs'
 
 // POST /api/purchase-orders/submit-for-approval
@@ -37,6 +38,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Approver selection is required' }, { status: 400 })
     }
 
+    // Validate and transform purchase order data (including date conversion)
+    const validation = validateRequestBody(createPurchaseOrderSchema, purchaseOrderData)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.errors },
+        { status: 400 }
+      )
+    }
+
+    const { lineItems, ...poData } = validation.data
+
     // Validate that the selected approver is an admin in the organization
     const approver = await prisma.user.findFirst({
       where: {
@@ -51,18 +63,29 @@ export async function POST(request: Request) {
     }
 
     // Generate PO number if not provided (atomic, race-condition safe)
-    const poNumber = purchaseOrderData.poNumber || await generatePONumber(user.organizationId!)
+    const poNumber = poData.poNumber || await generatePONumber(user.organizationId!)
 
     // Use a transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
       // Create the PO with PENDING_APPROVAL status
       const purchaseOrder = await tx.purchaseOrder.create({
         data: {
-          ...purchaseOrderData,
+          ...poData,
           poNumber,
           status: 'PENDING_APPROVAL',
           organizationId: user.organizationId!,
           createdById: user.id,
+          lineItems: {
+            create: lineItems.map((item) => ({
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
+              totalPrice: typeof item.unitPrice === 'string'
+                ? parseFloat(item.unitPrice) * item.quantity
+                : item.unitPrice * item.quantity,
+              notes: item.notes,
+            })),
+          },
         },
         include: {
           lineItems: true,
