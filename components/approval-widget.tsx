@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface ApprovalRequest {
   id: string
@@ -26,8 +26,7 @@ interface ApprovalRequest {
 }
 
 export function ApprovalWidget() {
-  console.log('[ApprovalWidget] Component rendering...')
-
+  const router = useRouter()
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [routerReady, setRouterReady] = useState(false)
@@ -37,10 +36,8 @@ export function ApprovalWidget() {
   const [processing, setProcessing] = useState(false)
 
   useEffect(() => {
-    console.log('[ApprovalWidget] Router check useEffect')
     // Small delay to ensure router is fully mounted
     const timer = setTimeout(() => {
-      console.log('[ApprovalWidget] Router marked as ready')
       setRouterReady(true)
     }, 100)
     return () => clearTimeout(timer)
@@ -48,30 +45,22 @@ export function ApprovalWidget() {
 
   useEffect(() => {
     if (!routerReady) {
-      console.log('[ApprovalWidget] Waiting for router before fetching')
       return
     }
-    console.log('[ApprovalWidget] useEffect fired, calling fetchPendingApprovals')
     fetchPendingApprovals()
   }, [routerReady])
 
   const fetchPendingApprovals = async () => {
     try {
-      console.log('[ApprovalWidget] Fetching pending approvals...')
       const response = await fetch('/api/approvals/pending')
-      console.log('[ApprovalWidget] Response status:', response.status)
 
       if (response.ok) {
         const data = await response.json()
-        console.log('[ApprovalWidget] Received data:', data)
         setApprovals(data.approvals)
-      } else {
-        console.error('[ApprovalWidget] Non-OK response:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error('[ApprovalWidget] Error fetching pending approvals:', error)
+      console.error('Error fetching pending approvals:', error)
     } finally {
-      console.log('[ApprovalWidget] Fetch complete, setting loading to false')
       setLoading(false)
     }
   }
@@ -191,13 +180,12 @@ export function ApprovalWidget() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <Link
-                      href={`/purchase-orders/${approval.purchaseOrder.id}`}
-                      prefetch={false}
-                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                    <button
+                      onClick={() => router.push(`/purchase-orders/${approval.purchaseOrder.id}`)}
+                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline text-left"
                     >
                       PO #{approval.purchaseOrder.poNumber}
-                    </Link>
+                    </button>
                     <p className="text-sm text-slate-900 dark:text-white mt-1">
                       {approval.purchaseOrder.title}
                     </p>
