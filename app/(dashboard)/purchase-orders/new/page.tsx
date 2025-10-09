@@ -45,6 +45,13 @@ interface Organization {
   autoApproveAdmin: boolean
 }
 
+interface Approver {
+  id: string
+  name: string | null
+  email: string
+  role: 'ADMIN' | 'SUPER_ADMIN'
+}
+
 export default function NewPurchaseOrderPage() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
@@ -53,6 +60,10 @@ export default function NewPurchaseOrderPage() {
   const [selectedContactId, setSelectedContactId] = useState('')
   const [user, setUser] = useState<User | null>(null)
   const [organization, setOrganization] = useState<Organization | null>(null)
+  const [approvers, setApprovers] = useState<Approver[]>([])
+  const [showApproverModal, setShowApproverModal] = useState(false)
+  const [selectedApproverId, setSelectedApproverId] = useState('')
+  const [pendingPurchaseOrderData, setPendingPurchaseOrderData] = useState<any>(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -78,6 +89,7 @@ export default function NewPurchaseOrderPage() {
     fetchContacts()
     fetchTaxRates()
     fetchUserAndOrganization()
+    fetchApprovers()
   }, [])
 
   const fetchContacts = async () => {
@@ -124,6 +136,18 @@ export default function NewPurchaseOrderPage() {
       }
     } catch (error) {
       console.error('Error fetching user and organization:', error)
+    }
+  }
+
+  const fetchApprovers = async () => {
+    try {
+      const response = await fetch('/api/users/approvers')
+      if (response.ok) {
+        const data = await response.json()
+        setApprovers(data.approvers)
+      }
+    } catch (error) {
+      console.error('Error fetching approvers:', error)
     }
   }
 
@@ -264,6 +288,45 @@ export default function NewPurchaseOrderPage() {
     return needsApproval() ? 'Submit for Approval' : 'Create Purchase Order'
   }
 
+  const handleApproverSubmit = async () => {
+    if (!selectedApproverId) {
+      alert('Please select an approver')
+      return
+    }
+
+    if (!pendingPurchaseOrderData) return
+
+    setSubmitting(true)
+    setShowApproverModal(false)
+
+    try {
+      const response = await fetch('/api/purchase-orders/submit-for-approval', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          purchaseOrderData: pendingPurchaseOrderData,
+          approverId: selectedApproverId
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        alert('Purchase order submitted for approval')
+        router.push(`/purchase-orders/${data.purchaseOrder.id}`)
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to submit for approval')
+        setSubmitting(false)
+      }
+    } catch (error) {
+      console.error('Error submitting for approval:', error)
+      alert('Failed to submit for approval')
+      setSubmitting(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -287,23 +350,11 @@ export default function NewPurchaseOrderPage() {
 
       // Check if approval is needed
       if (needsApproval()) {
-        // Submit for approval
-        const response = await fetch('/api/purchase-orders/submit-for-approval', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ purchaseOrderData })
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          alert('Purchase order submitted for approval')
-          router.push(`/purchase-orders/${data.purchaseOrder.id}`)
-        } else {
-          const error = await response.json()
-          alert(error.error || 'Failed to submit for approval')
-        }
+        // Show approver selection modal
+        setPendingPurchaseOrderData(purchaseOrderData)
+        setShowApproverModal(true)
+        setSubmitting(false)
+        return
       } else {
         // Create normally (auto-approved)
         const response = await fetch('/api/purchase-orders', {
@@ -689,6 +740,58 @@ export default function NewPurchaseOrderPage() {
           </Link>
         </div>
       </form>
+
+      {/* Approver Selection Modal */}
+      {showApproverModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Select Approver
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              This purchase order requires approval. Please select who should review and approve it.
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Approver <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedApproverId}
+                onChange={(e) => setSelectedApproverId(e.target.value)}
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Select an approver --</option>
+                {approvers.map((approver) => (
+                  <option key={approver.id} value={approver.id}>
+                    {approver.name || approver.email} ({approver.role})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowApproverModal(false)
+                  setSelectedApproverId('')
+                  setPendingPurchaseOrderData(null)
+                }}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleApproverSubmit}
+                disabled={!selectedApproverId || submitting}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Submitting...' : 'Submit for Approval'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   )

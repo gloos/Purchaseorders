@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
 // GET /api/approvals/pending
-// Get all pending approval requests for the organization (ADMIN/SUPER_ADMIN only)
+// Get pending approval requests assigned to the current user (ADMIN/SUPER_ADMIN only)
 export async function GET() {
   try {
     const supabase = await createClient()
@@ -28,11 +28,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    // Get all pending approval requests for the organization
+    // Get pending approval requests assigned to this user
     const pendingApprovals = await prisma.approvalRequest.findMany({
       where: {
         organizationId: user.organizationId,
         status: 'PENDING',
+        approverId: user.id,
       },
       include: {
         purchaseOrder: {

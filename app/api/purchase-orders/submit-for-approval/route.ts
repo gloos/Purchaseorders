@@ -26,10 +26,27 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { purchaseOrderData } = body
+    const { purchaseOrderData, approverId } = body
 
     if (!purchaseOrderData) {
       return NextResponse.json({ error: 'Purchase order data is required' }, { status: 400 })
+    }
+
+    if (!approverId) {
+      return NextResponse.json({ error: 'Approver selection is required' }, { status: 400 })
+    }
+
+    // Validate that the selected approver is an admin in the organization
+    const approver = await prisma.user.findFirst({
+      where: {
+        id: approverId,
+        organizationId: user.organizationId!,
+        role: { in: ['ADMIN', 'SUPER_ADMIN'] }
+      }
+    })
+
+    if (!approver) {
+      return NextResponse.json({ error: 'Invalid approver selected' }, { status: 400 })
     }
 
     // Use a transaction to ensure data consistency
@@ -48,11 +65,12 @@ export async function POST(request: Request) {
         },
       })
 
-      // Create approval request
+      // Create approval request assigned to selected approver
       const approvalRequest = await tx.approvalRequest.create({
         data: {
           purchaseOrderId: purchaseOrder.id,
           requesterId: user.id,
+          approverId: approverId,
           organizationId: user.organizationId!,
           amount: purchaseOrder.subtotalAmount,
           status: 'PENDING',
@@ -71,32 +89,18 @@ export async function POST(request: Request) {
       return { purchaseOrder, approvalRequest }
     })
 
-    // Send email notifications to all ADMINs and SUPER_ADMINs
+    // Send email notification to the selected approver
     try {
-      const admins = await prisma.user.findMany({
-        where: {
-          organizationId: user.organizationId!,
-          role: { in: ['ADMIN', 'SUPER_ADMIN'] }
-        },
-        select: {
-          email: true
-        }
+      await sendApprovalRequestEmail({
+        to: [approver.email],
+        poNumber: result.purchaseOrder.poNumber,
+        poTitle: result.purchaseOrder.title,
+        amount: result.purchaseOrder.subtotalAmount.toString(),
+        currency: result.purchaseOrder.currency,
+        requesterName: user.name || user.email,
+        supplierName: result.purchaseOrder.supplierName,
+        poId: result.purchaseOrder.id
       })
-
-      const adminEmails = admins.map(admin => admin.email)
-
-      if (adminEmails.length > 0) {
-        await sendApprovalRequestEmail({
-          to: adminEmails,
-          poNumber: result.purchaseOrder.poNumber,
-          poTitle: result.purchaseOrder.title,
-          amount: result.purchaseOrder.subtotalAmount.toString(),
-          currency: result.purchaseOrder.currency,
-          requesterName: user.name || user.email,
-          supplierName: result.purchaseOrder.supplierName,
-          poId: result.purchaseOrder.id
-        })
-      }
     } catch (emailError) {
       // Log email error but don't fail the request
       console.error('Failed to send approval request email:', emailError)
