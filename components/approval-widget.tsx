@@ -168,6 +168,7 @@ export function ApprovalWidget() {
                   <div>
                     <Link
                       href={`/purchase-orders/${approval.purchaseOrder.id}`}
+                      prefetch={false}
                       className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       PO #{approval.purchaseOrder.poNumber}

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Navbar } from '@/components/navbar'
-// import { ApprovalWidget } from '@/components/approval-widget' // TEMPORARILY COMMENTED OUT FOR DEBUGGING
+import { ApprovalWidget } from '@/components/approval-widget'
 
 interface DashboardAnalytics {
   summary: {
@@ -69,13 +69,12 @@ const STATUS_LABELS: Record<string, string> = {
 export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
-  // TEMPORARILY COMMENTED OUT FOR DEBUGGING
-  // const [userRole, setUserRole] = useState<string | null>(null)
-  // const [userRoleLoading, setUserRoleLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [userRoleLoading, setUserRoleLoading] = useState(true)
 
   useEffect(() => {
     fetchAnalytics()
-    // fetchUserRole() // TEMPORARILY COMMENTED OUT FOR DEBUGGING
+    fetchUserRole()
   }, [])
 
   const fetchAnalytics = async () => {
@@ -94,21 +93,20 @@ export default function DashboardPage() {
     }
   }
 
-  // TEMPORARILY COMMENTED OUT FOR DEBUGGING
-  // const fetchUserRole = async () => {
-  //   try {
-  //     setUserRoleLoading(true)
-  //     const response = await fetch('/api/me')
-  //     if (response.ok) {
-  //       const data = await response.json()
-  //       setUserRole(data.role)
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching user role:', error)
-  //   } finally {
-  //     setUserRoleLoading(false)
-  //   }
-  // }
+  const fetchUserRole = async () => {
+    try {
+      setUserRoleLoading(true)
+      const response = await fetch('/api/me')
+      if (response.ok) {
+        const data = await response.json()
+        setUserRole(data.role)
+      }
+    } catch (error) {
+      console.error('Error fetching user role:', error)
+    } finally {
+      setUserRoleLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -379,12 +377,11 @@ export default function DashboardPage() {
           )}
 
           {/* Approval Widget - Only for ADMIN and SUPER_ADMIN */}
-          {/* TEMPORARILY COMMENTED OUT FOR DEBUGGING */}
-          {/* {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+          {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
             <div className="mb-8">
               <ApprovalWidget />
             </div>
-          )} */}
+          )}
 
           {/* Recent Activity */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
