@@ -376,8 +376,8 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Approval Widget - Only for ADMIN and SUPER_ADMIN */}
-          {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+          {/* Approval Widget - Only for ADMIN (SUPER_ADMIN temporarily disabled for debugging) */}
+          {!userRoleLoading && userRole === 'ADMIN' && (
             <div className="mb-8">
               <ApprovalWidget />
             </div>
