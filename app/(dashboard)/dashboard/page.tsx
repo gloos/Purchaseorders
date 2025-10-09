@@ -85,9 +85,8 @@ export default function DashboardPage() {
       if (response.ok) {
         const data = await response.json()
         setAnalytics(data)
-      } else if (response.status === 401) {
-        router.push('/signin')
       }
+      // Note: 401 errors are now handled by middleware redirects
     } catch (error) {
       console.error('Error fetching analytics:', error)
     } finally {
