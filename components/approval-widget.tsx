@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 
 interface ApprovalRequest {
   id: string
@@ -167,12 +166,12 @@ export function ApprovalWidget() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <Link
+                    <a
                       href={`/purchase-orders/${approval.purchaseOrder.id}`}
                       className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       PO #{approval.purchaseOrder.poNumber}
-                    </Link>
+                    </a>
                     <p className="text-sm text-slate-900 dark:text-white mt-1">
                       {approval.purchaseOrder.title}
                     </p>
