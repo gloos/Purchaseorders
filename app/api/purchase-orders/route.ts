@@ -110,7 +110,7 @@ export async function POST(request: Request) {
       select: { approvalThreshold: true, autoApproveAdmin: true }
     })
 
-    const threshold = organization?.approvalThreshold ?? 50
+    const threshold = organization?.approvalThreshold ? Number(organization.approvalThreshold) : 50
     const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
     const autoApprove = organization?.autoApproveAdmin ?? true
 
