@@ -15,7 +15,12 @@ export async function GET() {
     // Get user with organization
     const user = await prisma.user.findUnique({
       where: { id: authUser.id },
-      include: {
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        avatarUrl: true,
         organization: {
           select: {
             id: true,
@@ -25,14 +30,6 @@ export async function GET() {
             autoApproveAdmin: true,
           },
         },
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        avatarUrl: true,
-        organization: true,
       },
     })
 
