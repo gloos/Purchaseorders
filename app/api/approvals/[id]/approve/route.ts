@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // POST /api/approvals/[id]/approve
 // Approve a pending approval request (ADMIN/SUPER_ADMIN only)
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
