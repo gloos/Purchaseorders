@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Navbar } from '@/components/navbar'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input, Textarea } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies'
 
 interface LineItem {
@@ -383,122 +386,103 @@ export default function NewPurchaseOrderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Navbar />
-      <div className="p-8">
-        <div className="mb-6">
-        <Link href="/purchase-orders" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
-          ← Back to Purchase Orders
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="mb-8">
+        <Link href="/purchase-orders" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4">
+          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Purchase Orders
         </Link>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">New Purchase Order</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
+              <Input
+                label="Title"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Description
-              </label>
-              <textarea
+              <Textarea
+                label="Description"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Status *
-              </label>
-              <select
+              <Select
+                label="Status"
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-              >
-                <option value="DRAFT">Draft</option>
-                <option value="PENDING_APPROVAL">Pending Approval</option>
-                <option value="APPROVED">Approved</option>
-                <option value="SENT">Sent</option>
-                <option value="RECEIVED">Received</option>
-                <option value="CANCELLED">Cancelled</option>
-              </select>
+                options={[
+                  { value: 'DRAFT', label: 'Draft' },
+                  { value: 'PENDING_APPROVAL', label: 'Pending Approval' },
+                  { value: 'APPROVED', label: 'Approved' },
+                  { value: 'SENT', label: 'Sent' },
+                  { value: 'RECEIVED', label: 'Received' },
+                  { value: 'CANCELLED', label: 'Cancelled' }
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Currency *
-              </label>
-              <select
+              <Select
+                label="Currency"
                 name="currency"
                 value={formData.currency}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               >
                 {SUPPORTED_CURRENCIES.map(currency => (
                   <option key={currency.code} value={currency.code}>
                     {currency.code} - {currency.name} {currency.symbol ? `(${currency.symbol})` : ''}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Tax Mode *
-              </label>
-              <select
+              <Select
+                label="Tax Mode"
                 name="taxMode"
                 value={formData.taxMode}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-              >
-                <option value="NONE">No Tax</option>
-                <option value="EXCLUSIVE">Tax Exclusive (added on top)</option>
-                <option value="INCLUSIVE">Tax Inclusive (included in prices)</option>
-              </select>
+                options={[
+                  { value: 'NONE', label: 'No Tax' },
+                  { value: 'EXCLUSIVE', label: 'Tax Exclusive (added on top)' },
+                  { value: 'INCLUSIVE', label: 'Tax Inclusive (included in prices)' }
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Tax Rate {formData.taxMode !== 'NONE' && '*'}
-              </label>
-              <select
+              <Select
+                label={`Tax Rate ${formData.taxMode !== 'NONE' ? '*' : ''}`}
                 value={formData.taxRateId}
                 onChange={(e) => handleTaxRateSelect(e.target.value)}
                 disabled={formData.taxMode === 'NONE'}
                 required={formData.taxMode !== 'NONE'}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="-- Select tax rate --"
+                helperText={formData.taxRateId && formData.taxMode !== 'NONE' ? `Tax rate: ${formData.taxRate}%` : undefined}
               >
-                <option value="">-- Select tax rate --</option>
                 {taxRates.map((rate) => (
                   <option key={rate.id} value={rate.id}>
                     {rate.name} ({rate.rate}%)
                   </option>
                 ))}
-              </select>
-              {formData.taxRateId && formData.taxMode !== 'NONE' && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Tax rate: {formData.taxRate}%
-                </p>
-              )}
+              </Select>
               {taxRates.length === 0 && formData.taxMode !== 'NONE' && (
                 <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                   No tax rates configured. <Link href="/settings/tax-rates" className="underline">Add tax rates</Link>
@@ -506,106 +490,90 @@ export default function NewPurchaseOrderPage() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Order Date *
-              </label>
-              <input
+              <Input
+                label="Order Date"
                 type="date"
                 name="orderDate"
                 value={formData.orderDate}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Delivery Date
-              </label>
-              <input
+              <Input
+                label="Delivery Date"
                 type="date"
                 name="deliveryDate"
                 value={formData.deliveryDate}
                 onChange={handleChange}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Supplier Information */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Supplier Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Select from Contacts
-              </label>
-              <select
+              <Select
+                label="Select from Contacts (Optional)"
                 value={selectedContactId}
                 onChange={(e) => handleContactSelect(e.target.value)}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                placeholder="-- Or enter manually below --"
               >
-                <option value="">-- Select a contact or enter manually --</option>
                 {contacts.map((contact) => (
                   <option key={contact.id} value={contact.id}>
                     {contact.name}
                   </option>
                 ))}
-              </select>
+              </Select>
+              {contacts.length === 0 && (
+                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                  No contacts available. <Link href="/freeagent/contacts" className="underline">Sync from FreeAgent</Link>
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Supplier Name *
-              </label>
-              <input
+              <Input
+                label="Supplier Name"
                 type="text"
                 name="supplierName"
                 value={formData.supplierName}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
+              <Input
+                label="Email"
                 type="email"
                 name="supplierEmail"
                 value={formData.supplierEmail}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Phone
-              </label>
-              <input
+              <Input
+                label="Phone"
                 type="tel"
                 name="supplierPhone"
                 value={formData.supplierPhone}
                 onChange={handleChange}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Address
-              </label>
-              <textarea
+            <div className="md:col-span-2">
+              <Textarea
+                label="Address"
                 name="supplierAddress"
                 value={formData.supplierAddress}
                 onChange={handleChange}
                 rows={3}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Line Items */}
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
@@ -714,34 +682,36 @@ export default function NewPurchaseOrderPage() {
         </div>
 
         {/* Notes */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Additional Notes</h2>
-          <textarea
+          <Textarea
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             rows={4}
-            className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
             placeholder="Any additional notes or comments..."
+            helperText="Any additional information or special instructions"
           />
-        </div>
+        </Card>
 
         {/* Actions */}
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={submitting || !user || user.role === 'VIEWER'}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {user && user.role === 'VIEWER' ? 'No Permission' : getSubmitButtonText()}
-          </button>
-          <Link
-            href="/purchase-orders"
-            className="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-medium py-2 px-6 rounded-lg transition-colors"
-          >
-            Cancel
-          </Link>
-        </div>
+        <Card padding="lg">
+          <div className="flex justify-between items-center">
+            <Link href="/purchase-orders">
+              <Button variant="secondary" type="button">
+                Cancel
+              </Button>
+            </Link>
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={submitting || !user || user.role === 'VIEWER'}
+              isLoading={submitting}
+            >
+              {user && user.role === 'VIEWER' ? 'No Permission' : getSubmitButtonText()}
+            </Button>
+          </div>
+        </Card>
       </form>
 
       {/* Approver Selection Modal */}
