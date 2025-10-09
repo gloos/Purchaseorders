@@ -218,7 +218,7 @@ model PurchaseOrder {
   taxRate        Decimal   @default(0) @db.Decimal(5, 2) // Tax percentage (e.g., 20.00 for 20%) - IMMUTABLE snapshot at PO creation time
   taxAmount      Decimal   @default(0) @db.Decimal(10, 2) // Calculated tax amount - IMMUTABLE snapshot for accounting history
   totalAmount    Decimal   @db.Decimal(10, 2) // Final amount (subtotal + tax for EXCLUSIVE, or subtotal for INCLUSIVE/NONE)
-  currency       String    @default("GBP")
+  currency       String    @default("GBP") // ISO 4217 currency code (must match FreeAgent supported currencies - see lib/currencies.ts)
 
   // Tax Rate relation (optional reference for auditing - NEVER used for calculations)
   // This preserves a link to the TaxRate that was selected, but taxRate field above holds the actual value

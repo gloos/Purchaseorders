@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Navbar } from '@/components/navbar'
+import { SUPPORTED_CURRENCIES } from '@/lib/currencies'
 
 interface LineItem {
   id: string
@@ -341,9 +342,11 @@ export default function EditPurchaseOrderPage() {
                 required
                 className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               >
-                <option value="GBP">GBP (£)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
+                {SUPPORTED_CURRENCIES.map(currency => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} - {currency.name} {currency.symbol ? `(${currency.symbol})` : ''}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

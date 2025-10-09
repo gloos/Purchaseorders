@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { POStatus, TaxMode, UserRole } from '@prisma/client'
+import { CURRENCY_CODES } from './currencies'
 
 /**
  * Validation schemas for API request bodies
@@ -21,7 +22,9 @@ export const createPurchaseOrderSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   description: z.string().max(2000, 'Description too long').optional().nullable().transform(val => val === '' ? null : val),
   status: z.nativeEnum(POStatus).optional().default('DRAFT' as POStatus),
-  currency: z.string().length(3, 'Currency must be 3-letter code').default('GBP'),
+  currency: z.enum(CURRENCY_CODES as [string, ...string[]], {
+    errorMap: () => ({ message: 'Invalid currency code. Must be a FreeAgent-supported currency.' })
+  }).default('GBP'),
 
   // Tax configuration
   taxMode: z.nativeEnum(TaxMode).optional().default('EXCLUSIVE' as TaxMode),
@@ -61,6 +64,9 @@ export const updatePurchaseOrderSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long').optional(),
   description: z.string().max(2000, 'Description too long').optional().nullable().transform(val => val === '' ? null : val),
   status: z.nativeEnum(POStatus).optional(),
+  currency: z.enum(CURRENCY_CODES as [string, ...string[]], {
+    errorMap: () => ({ message: 'Invalid currency code. Must be a FreeAgent-supported currency.' })
+  }).optional(),
 
   // Tax configuration
   taxMode: z.nativeEnum(TaxMode).optional(),
