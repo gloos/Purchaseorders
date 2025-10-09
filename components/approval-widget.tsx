@@ -6,23 +6,48 @@ import Link from 'next/link'
 interface ApprovalRequest {
   id: string
   status: string
-  amount: number
+  amount: number | null
   createdAt: string
   purchaseOrder: {
-    id: string
-    poNumber: string
-    title: string
-    subtotalAmount: number
-    totalAmount: number
-    currency: string
-    supplierName: string
-    createdAt: string
-  }
+    id: string | null
+    poNumber: string | null
+    title: string | null
+    subtotalAmount: number | null
+    totalAmount: number | null
+    currency: string | null
+    supplierName: string | null
+    createdAt: string | null
+  } | null
   requester: {
-    id: string
+    id: string | null
     name: string | null
-    email: string
+    email: string | null
+  } | null
+}
+
+const formatCurrency = (currency: string | null, amount: number | null) => {
+  if (typeof amount !== 'number' || Number.isNaN(amount)) {
+    return '—'
   }
+
+  const prefix = currency ?? ''
+  return `${prefix}${prefix && ' '}${amount.toFixed(2)}`
+}
+
+const formatDate = (value: string | null) => {
+  if (!value) {
+    return 'Unknown date'
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return 'Unknown date'
+  }
+
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })}`
 }
 
 export function ApprovalWidget() {
@@ -159,61 +184,73 @@ export function ApprovalWidget() {
           </div>
         ) : (
           <div className="space-y-4">
-            {approvals.map((approval) => (
-              <div
-                key={approval.id}
-                className="border border-slate-200 dark:border-slate-600 rounded-lg p-4"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <Link
-                      href={`/purchase-orders/${approval.purchaseOrder.id}`}
-                      prefetch={false}
-                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      PO #{approval.purchaseOrder.poNumber}
-                    </Link>
-                    <p className="text-sm text-slate-900 dark:text-white mt-1">
-                      {approval.purchaseOrder.title}
-                    </p>
+            {approvals.map((approval) => {
+              if (!approval.purchaseOrder) {
+                return null
+              }
+
+              const poId = approval.purchaseOrder.id
+              const poTitle = approval.purchaseOrder.title ?? 'Untitled purchase order'
+              const poNumber = approval.purchaseOrder.poNumber ?? 'Unknown'
+              const supplier = approval.purchaseOrder.supplierName ?? 'Unknown supplier'
+              const amountDisplay = formatCurrency(
+                approval.purchaseOrder.currency,
+                approval.purchaseOrder.totalAmount,
+              )
+
+              const requesterName = approval.requester?.name || approval.requester?.email || 'Unknown requester'
+              const createdAtDisplay = formatDate(approval.createdAt)
+
+              return (
+                <div
+                  key={approval.id}
+                  className="border border-slate-200 dark:border-slate-600 rounded-lg p-4"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      {poId ? (
+                        <Link
+                          href={`/purchase-orders/${poId}`}
+                          prefetch={false}
+                          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          PO #{poNumber}
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                          PO #{poNumber}
+                        </p>
+                      )}
+                      <p className="text-sm text-slate-900 dark:text-white mt-1">{poTitle}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">{amountDisplay}</span>
                   </div>
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {approval.purchaseOrder.currency} {approval.purchaseOrder.totalAmount.toFixed(2)}
-                  </span>
-                </div>
 
-                <div className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                  <p>Supplier: {approval.purchaseOrder.supplierName}</p>
-                  <p>
-                    Requested by: {approval.requester.name || approval.requester.email}
-                  </p>
-                  <p>
-                    {new Date(approval.createdAt).toLocaleDateString()}{' '}
-                    {new Date(approval.createdAt).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                    <p>Supplier: {supplier}</p>
+                    <p>Requested by: {requesterName}</p>
+                    <p>{createdAtDisplay}</p>
+                  </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleApprove(approval.id)}
-                    disabled={processing}
-                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-medium py-2 px-3 rounded transition-colors"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleDenyClick(approval)}
-                    disabled={processing}
-                    className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-medium py-2 px-3 rounded transition-colors"
-                  >
-                    Deny
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleApprove(approval.id)}
+                      disabled={processing}
+                      className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-medium py-2 px-3 rounded transition-colors"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleDenyClick(approval)}
+                      disabled={processing}
+                      className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-medium py-2 px-3 rounded transition-colors"
+                    >
+                      Deny
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
