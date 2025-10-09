@@ -1,6 +1,6 @@
 // POST /api/auth/signup-invited - Complete signup with invitation token
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { acceptInvitationSchema, validateRequestBody } from '@/lib/validations'
 import * as Sentry from '@sentry/nextjs'
@@ -65,15 +65,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 6. Create Supabase auth user
-    const supabase = await createClient()
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 6. Create Supabase auth user with admin client (auto-confirm email)
+    // Using admin client because user has already validated email via invitation token
+    const supabase = createAdminClient()
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: invitation.email,
       password,
-      options: {
-        data: {
-          name
-        }
+      email_confirm: true, // Auto-confirm since they validated via invitation
+      user_metadata: {
+        name
       }
     })
 
