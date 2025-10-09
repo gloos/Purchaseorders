@@ -187,11 +187,7 @@ export function ApprovalWidget() {
                     Requested by: {approval.requester.name || approval.requester.email}
                   </p>
                   <p>
-                    {new Date(approval.createdAt).toLocaleDateString()}{' '}
-                    {new Date(approval.createdAt).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {approval.createdAt}
                   </p>
                 </div>
 
