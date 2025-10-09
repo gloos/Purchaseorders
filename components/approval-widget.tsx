@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 interface ApprovalRequest {
@@ -28,17 +29,33 @@ interface ApprovalRequest {
 export function ApprovalWidget() {
   console.log('[ApprovalWidget] Component rendering...')
 
+  const router = useRouter()
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
   const [loading, setLoading] = useState(true)
+  const [routerReady, setRouterReady] = useState(false)
   const [denyModalOpen, setDenyModalOpen] = useState(false)
   const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null)
   const [denyReason, setDenyReason] = useState('')
   const [processing, setProcessing] = useState(false)
 
   useEffect(() => {
+    console.log('[ApprovalWidget] Router check useEffect')
+    // Small delay to ensure router is fully mounted
+    const timer = setTimeout(() => {
+      console.log('[ApprovalWidget] Router marked as ready')
+      setRouterReady(true)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!routerReady) {
+      console.log('[ApprovalWidget] Waiting for router before fetching')
+      return
+    }
     console.log('[ApprovalWidget] useEffect fired, calling fetchPendingApprovals')
     fetchPendingApprovals()
-  }, [])
+  }, [routerReady])
 
   const fetchPendingApprovals = async () => {
     try {
@@ -123,7 +140,7 @@ export function ApprovalWidget() {
     }
   }
 
-  if (loading) {
+  if (!routerReady || loading) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
