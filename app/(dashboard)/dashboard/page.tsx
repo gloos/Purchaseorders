@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Navbar } from '@/components/navbar'
-import { ApprovalWidget } from '@/components/approval-widget'
+// import { ApprovalWidget } from '@/components/approval-widget' // TEMPORARILY REMOVED FOR DEBUGGING
 
 interface DashboardAnalytics {
   summary: {
@@ -376,10 +376,10 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Approval Widget - Rendered but hidden until role is loaded */}
-          <div className={`mb-8 ${!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') ? '' : 'hidden'}`}>
+          {/* Approval Widget - TEMPORARILY REMOVED FOR DEBUGGING */}
+          {/* <div className={`mb-8 ${!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') ? '' : 'hidden'}`}>
             <ApprovalWidget />
-          </div>
+          </div> */}
 
           {/* Recent Activity */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
