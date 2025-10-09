@@ -26,6 +26,8 @@ interface ApprovalRequest {
 }
 
 export function ApprovalWidget() {
+  console.log('[ApprovalWidget] Component rendering...')
+
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [denyModalOpen, setDenyModalOpen] = useState(false)
@@ -34,19 +36,27 @@ export function ApprovalWidget() {
   const [processing, setProcessing] = useState(false)
 
   useEffect(() => {
+    console.log('[ApprovalWidget] useEffect fired, calling fetchPendingApprovals')
     fetchPendingApprovals()
   }, [])
 
   const fetchPendingApprovals = async () => {
     try {
+      console.log('[ApprovalWidget] Fetching pending approvals...')
       const response = await fetch('/api/approvals/pending')
+      console.log('[ApprovalWidget] Response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('[ApprovalWidget] Received data:', data)
         setApprovals(data.approvals)
+      } else {
+        console.error('[ApprovalWidget] Non-OK response:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error('Error fetching pending approvals:', error)
+      console.error('[ApprovalWidget] Error fetching pending approvals:', error)
     } finally {
+      console.log('[ApprovalWidget] Fetch complete, setting loading to false')
       setLoading(false)
     }
   }
