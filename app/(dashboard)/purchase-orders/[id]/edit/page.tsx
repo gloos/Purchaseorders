@@ -3,7 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Navbar } from '@/components/navbar'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input, Textarea } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies'
 
 interface LineItem {
@@ -260,31 +263,30 @@ export default function EditPurchaseOrderPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Navbar />
-        <div className="p-8">
-          <div className="text-center py-12">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          </div>
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Navbar />
-      <div className="p-8">
-        <div className="mb-6">
-        <Link href={`/purchase-orders/${params.id}`} className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
-          ← Back to Purchase Order
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="mb-8">
+        <Link href={`/purchase-orders/${params.id}`} className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4">
+          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Purchase Order
         </Link>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Edit Purchase Order</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
