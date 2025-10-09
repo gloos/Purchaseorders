@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
+import { Input, Textarea } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { Button } from '@/components/ui/Button'
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies'
 
 interface LineItem {
@@ -287,101 +290,83 @@ export default function EditPurchaseOrderPage() {
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Title *
-              </label>
-              <input
+              <Input
+                label="Title"
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Description
-              </label>
-              <textarea
+              <Textarea
+                label="Description"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Status *
-              </label>
-              <select
+              <Select
+                label="Status"
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-              >
-                <option value="DRAFT">Draft</option>
-                <option value="PENDING_APPROVAL">Pending Approval</option>
-                <option value="APPROVED">Approved</option>
-                <option value="SENT">Sent</option>
-                <option value="RECEIVED">Received</option>
-                <option value="CANCELLED">Cancelled</option>
-              </select>
+                options={[
+                  { value: 'DRAFT', label: 'Draft' },
+                  { value: 'PENDING_APPROVAL', label: 'Pending Approval' },
+                  { value: 'APPROVED', label: 'Approved' },
+                  { value: 'SENT', label: 'Sent' },
+                  { value: 'RECEIVED', label: 'Received' },
+                  { value: 'CANCELLED', label: 'Cancelled' }
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Currency *
-              </label>
-              <select
+              <Select
+                label="Currency"
                 name="currency"
                 value={formData.currency}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-              >
-                {SUPPORTED_CURRENCIES.map(currency => (
-                  <option key={currency.code} value={currency.code}>
-                    {currency.code} - {currency.name} {currency.symbol ? `(${currency.symbol})` : ''}
-                  </option>
-                ))}
-              </select>
+                options={SUPPORTED_CURRENCIES.map(currency => ({
+                  value: currency.code,
+                  label: `${currency.code} - ${currency.name}${currency.symbol ? ` (${currency.symbol})` : ''}`
+                }))}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Tax Mode *
-              </label>
-              <select
+              <Select
+                label="Tax Mode"
                 name="taxMode"
                 value={formData.taxMode}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-              >
-                <option value="NONE">No Tax</option>
-                <option value="EXCLUSIVE">Tax Exclusive (added on top)</option>
-                <option value="INCLUSIVE">Tax Inclusive (included in prices)</option>
-              </select>
+                options={[
+                  { value: 'NONE', label: 'No Tax' },
+                  { value: 'EXCLUSIVE', label: 'Tax Exclusive (added on top)' },
+                  { value: 'INCLUSIVE', label: 'Tax Inclusive (included in prices)' }
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Tax Rate {formData.taxMode !== 'NONE' && '*'}
-              </label>
-              <select
+              <Select
+                label={`Tax Rate${formData.taxMode !== 'NONE' ? ' *' : ''}`}
                 value={formData.taxRateId}
                 onChange={(e) => handleTaxRateSelect(e.target.value)}
                 disabled={formData.taxMode === 'NONE'}
                 required={formData.taxMode !== 'NONE'}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="">-- Select tax rate --</option>
-                {taxRates.map((rate) => (
-                  <option key={rate.id} value={rate.id}>
-                    {rate.name} ({rate.rate}%)
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: '-- Select tax rate --' },
+                  ...taxRates.map((rate) => ({
+                    value: rate.id,
+                    label: `${rate.name} (${rate.rate}%)`
+                  }))
+                ]}
+              />
               {formData.taxRateId && formData.taxMode !== 'NONE' && (
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Tax rate: {formData.taxRate}%
@@ -394,121 +379,101 @@ export default function EditPurchaseOrderPage() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Order Date *
-              </label>
-              <input
+              <Input
+                label="Order Date"
                 type="date"
                 name="orderDate"
                 value={formData.orderDate}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Delivery Date
-              </label>
-              <input
+              <Input
+                label="Delivery Date"
                 type="date"
                 name="deliveryDate"
                 value={formData.deliveryDate}
                 onChange={handleChange}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
           </div>
         </Card>
 
         {/* Supplier Information */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Supplier Information</h2>
 
           {/* Contact Selector */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Select from Contacts
-            </label>
-            <select
+            <Select
+              label="Select from Contacts"
               value={selectedContactId}
               onChange={(e) => handleContactSelect(e.target.value)}
-              className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-            >
-              <option value="">-- Select a contact or enter manually --</option>
-              {contacts.map((contact) => (
-                <option key={contact.id} value={contact.id}>
-                  {contact.name}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: '-- Select a contact or enter manually --' },
+                ...contacts.map((contact) => ({
+                  value: contact.id,
+                  label: contact.name
+                }))
+              ]}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Supplier Name *
-              </label>
-              <input
+              <Input
+                label="Supplier Name"
                 type="text"
                 name="supplierName"
                 value={formData.supplierName}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
+              <Input
+                label="Email"
                 type="email"
                 name="supplierEmail"
                 value={formData.supplierEmail}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Phone
-              </label>
-              <input
+              <Input
+                label="Phone"
                 type="tel"
                 name="supplierPhone"
                 value={formData.supplierPhone}
                 onChange={handleChange}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Address
-              </label>
-              <textarea
+              <Textarea
+                label="Address"
                 name="supplierAddress"
                 value={formData.supplierAddress}
                 onChange={handleChange}
                 rows={3}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Line Items */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Line Items</h2>
-            <button
+            <Button
               type="button"
               onClick={addLineItem}
-              className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+              variant="ghost"
+              size="sm"
             >
               + Add Item
-            </button>
+            </Button>
           </div>
           <div className="space-y-4">
             {lineItems.map((item, index) => (
@@ -518,64 +483,58 @@ export default function EditPurchaseOrderPage() {
                     Item {index + 1}
                   </span>
                   {lineItems.length > 1 && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => removeLineItem(item.id)}
-                      className="text-red-600 hover:text-red-700 text-sm"
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
                     >
                       Remove
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                      Description *
-                    </label>
-                    <input
+                    <Input
+                      label="Description"
                       type="text"
                       value={item.description}
                       onChange={(e) => handleLineItemChange(item.id, 'description', e.target.value)}
                       required
-                      className="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                      className="text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                      Quantity *
-                    </label>
-                    <input
+                    <Input
+                      label="Quantity"
                       type="number"
                       min="1"
                       value={item.quantity}
                       onChange={(e) => handleLineItemChange(item.id, 'quantity', parseInt(e.target.value) || 1)}
                       required
-                      className="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                      className="text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                      Unit Price *
-                    </label>
-                    <input
+                    <Input
+                      label="Unit Price"
                       type="number"
                       step="0.01"
                       min="0"
                       value={item.unitPrice}
                       onChange={(e) => handleLineItemChange(item.id, 'unitPrice', e.target.value)}
                       required
-                      className="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                      className="text-sm"
                     />
                   </div>
                   <div className="md:col-span-4">
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                      Notes
-                    </label>
-                    <input
+                    <Input
+                      label="Notes"
                       type="text"
                       value={item.notes}
                       onChange={(e) => handleLineItemChange(item.id, 'notes', e.target.value)}
-                      className="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                      className="text-sm"
                     />
                   </div>
                   <div className="md:col-span-4 text-right">
@@ -602,35 +561,39 @@ export default function EditPurchaseOrderPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Notes */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Additional Notes</h2>
-          <textarea
+          <Textarea
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             rows={4}
-            className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
             placeholder="Any additional notes or comments..."
           />
-        </div>
+        </Card>
 
         {/* Actions */}
         <div className="flex gap-4">
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="md"
             disabled={submitting}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50"
+            isLoading={submitting}
           >
             {submitting ? 'Saving...' : 'Save Changes'}
-          </button>
-          <Link
-            href={`/purchase-orders/${params.id}`}
-            className="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-medium py-2 px-6 rounded-lg transition-colors"
-          >
-            Cancel
+          </Button>
+          <Link href={`/purchase-orders/${params.id}`}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+            >
+              Cancel
+            </Button>
           </Link>
         </div>
       </form>
