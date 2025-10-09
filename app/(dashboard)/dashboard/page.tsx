@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import Link from 'next/link'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Navbar } from '@/components/navbar'
-import { ApprovalWidget } from '@/components/approval-widget'
+
+// Lazy load ApprovalWidget to prevent router conflicts
+const ApprovalWidget = lazy(() => import('@/components/approval-widget').then(mod => ({ default: mod.ApprovalWidget })))
 
 interface DashboardAnalytics {
   summary: {
@@ -379,7 +381,18 @@ export default function DashboardPage() {
           {/* Approval Widget - Only for ADMIN and SUPER_ADMIN */}
           {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
             <div className="mb-8">
-              <ApprovalWidget />
+              <Suspense fallback={
+                <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                    Pending Approvals
+                  </h3>
+                  <div className="text-center text-slate-600 dark:text-slate-400 py-4">
+                    Loading...
+                  </div>
+                </div>
+              }>
+                <ApprovalWidget />
+              </Suspense>
             </div>
           )}
 

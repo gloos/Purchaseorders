@@ -41,7 +41,7 @@ function SignInForm() {
 
       // Redirect to the original page or dashboard
       router.push(redirectTo || '/dashboard')
-      router.refresh()
+      // Note: router.refresh() removed to prevent navigation conflicts
     } catch (error: any) {
       setError(error.message || 'Failed to sign in')
     } finally {
