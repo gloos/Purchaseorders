@@ -5,17 +5,17 @@ import { useState, useEffect } from 'react'
 interface ApprovalRequest {
   id: string
   status: string
-  amount: number
-  createdAt: string
+  amount: string // Serialized from Decimal
+  createdAt: string // ISO string
   purchaseOrder: {
     id: string
     poNumber: string
     title: string
-    subtotalAmount: number
-    totalAmount: number
+    subtotalAmount: string // Serialized from Decimal
+    totalAmount: string // Serialized from Decimal
     currency: string
     supplierName: string
-    createdAt: string
+    createdAt: string // ISO string
   }
   requester: {
     id: string
@@ -165,7 +165,7 @@ export function ApprovalWidget() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* TEST: Add Decimal.toFixed() conversion */}
+            {/* TEST: Decimal now serialized as string in API, no .toFixed() needed */}
             {approvals.map((approval) => (
               <div key={approval.id} className="border border-slate-200 dark:border-slate-600 rounded-lg p-4">
                 <p className="text-sm text-slate-900 dark:text-white">
@@ -175,7 +175,7 @@ export function ApprovalWidget() {
                   {approval.purchaseOrder.title}
                 </p>
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {approval.purchaseOrder.currency} {approval.purchaseOrder.totalAmount.toFixed(2)}
+                  {approval.purchaseOrder.currency} {parseFloat(approval.purchaseOrder.totalAmount).toFixed(2)}
                 </p>
                 <p className="text-xs text-slate-500">
                   Supplier: {approval.purchaseOrder.supplierName}

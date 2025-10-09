@@ -61,9 +61,22 @@ export async function GET() {
       },
     })
 
+    // Serialize Decimal types to strings to avoid client-side conversion issues
+    const serializedApprovals = pendingApprovals.map(approval => ({
+      ...approval,
+      amount: approval.amount.toString(),
+      createdAt: approval.createdAt.toISOString(),
+      purchaseOrder: {
+        ...approval.purchaseOrder,
+        subtotalAmount: approval.purchaseOrder.subtotalAmount.toString(),
+        totalAmount: approval.purchaseOrder.totalAmount.toString(),
+        createdAt: approval.purchaseOrder.createdAt.toISOString(),
+      },
+    }))
+
     return NextResponse.json({
-      approvals: pendingApprovals,
-      count: pendingApprovals.length,
+      approvals: serializedApprovals,
+      count: serializedApprovals.length,
     })
   } catch (error) {
     console.error('Error fetching pending approvals:', error)
