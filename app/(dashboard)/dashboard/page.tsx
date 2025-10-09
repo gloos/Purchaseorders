@@ -69,12 +69,13 @@ const STATUS_LABELS: Record<string, string> = {
 export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [userRoleLoading, setUserRoleLoading] = useState(true)
+  // TEMPORARILY COMMENTED FOR DEBUGGING
+  // const [userRole, setUserRole] = useState<string | null>(null)
+  // const [userRoleLoading, setUserRoleLoading] = useState(true)
 
   useEffect(() => {
     fetchAnalytics()
-    fetchUserRole()
+    // fetchUserRole() // TEMPORARILY COMMENTED FOR DEBUGGING
   }, [])
 
   const fetchAnalytics = async () => {
@@ -93,20 +94,21 @@ export default function DashboardPage() {
     }
   }
 
-  const fetchUserRole = async () => {
-    try {
-      setUserRoleLoading(true)
-      const response = await fetch('/api/me')
-      if (response.ok) {
-        const data = await response.json()
-        setUserRole(data.role)
-      }
-    } catch (error) {
-      console.error('Error fetching user role:', error)
-    } finally {
-      setUserRoleLoading(false)
-    }
-  }
+  // TEMPORARILY COMMENTED FOR DEBUGGING
+  // const fetchUserRole = async () => {
+  //   try {
+  //     setUserRoleLoading(true)
+  //     const response = await fetch('/api/me')
+  //     if (response.ok) {
+  //       const data = await response.json()
+  //       setUserRole(data.role)
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching user role:', error)
+  //   } finally {
+  //     setUserRoleLoading(false)
+  //   }
+  // }
 
   if (loading) {
     return (
