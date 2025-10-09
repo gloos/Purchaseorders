@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Navbar } from '@/components/navbar'
-import { ApprovalWidget } from '@/components/approval-widget'
+// import { ApprovalWidget } from '@/components/approval-widget' // TEMPORARILY COMMENTED OUT FOR DEBUGGING
 
 interface DashboardAnalytics {
   summary: {
