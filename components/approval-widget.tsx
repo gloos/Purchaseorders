@@ -27,13 +27,10 @@ interface ApprovalRequest {
 export function ApprovalWidget() {
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
   const [loading, setLoading] = useState(true)
-  // TEST: State temporarily disabled for minimal rendering test
-  /*
   const [denyModalOpen, setDenyModalOpen] = useState(false)
   const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null)
   const [denyReason, setDenyReason] = useState('')
   const [processing, setProcessing] = useState(false)
-  */
 
   useEffect(() => {
     fetchPendingApprovals()
@@ -54,8 +51,6 @@ export function ApprovalWidget() {
     }
   }
 
-  // TEST: Functions temporarily disabled for minimal rendering test
-  /*
   const handleApprove = async (approvalId: string) => {
     if (!confirm('Are you sure you want to approve this purchase order?')) {
       return
@@ -117,7 +112,6 @@ export function ApprovalWidget() {
       setProcessing(false)
     }
   }
-  */
 
   if (loading) {
     return (
@@ -165,32 +159,65 @@ export function ApprovalWidget() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* TEST: Decimal now serialized as string in API, no .toFixed() needed */}
             {approvals.map((approval) => (
-              <div key={approval.id} className="border border-slate-200 dark:border-slate-600 rounded-lg p-4">
-                <p className="text-sm text-slate-900 dark:text-white">
-                  PO #{approval.purchaseOrder.poNumber}
-                </p>
-                <p className="text-sm text-slate-900 dark:text-white">
-                  {approval.purchaseOrder.title}
-                </p>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {approval.purchaseOrder.currency} {parseFloat(approval.purchaseOrder.totalAmount).toFixed(2)}
-                </p>
-                <p className="text-xs text-slate-500">
-                  Supplier: {approval.purchaseOrder.supplierName}
-                </p>
-                <p className="text-xs text-slate-500">
-                  Requested by: {approval.requester.email}
-                </p>
+              <div
+                key={approval.id}
+                className="border border-slate-200 dark:border-slate-600 rounded-lg p-4"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <a
+                      href={`/purchase-orders/${approval.purchaseOrder.id}`}
+                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      PO #{approval.purchaseOrder.poNumber}
+                    </a>
+                    <p className="text-sm text-slate-900 dark:text-white mt-1">
+                      {approval.purchaseOrder.title}
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {approval.purchaseOrder.currency} {parseFloat(approval.purchaseOrder.totalAmount).toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                  <p>Supplier: {approval.purchaseOrder.supplierName}</p>
+                  <p>
+                    Requested by: {approval.requester.name || approval.requester.email}
+                  </p>
+                  <p>
+                    {new Date(approval.createdAt).toLocaleDateString()}{' '}
+                    {new Date(approval.createdAt).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleApprove(approval.id)}
+                    disabled={processing}
+                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-medium py-2 px-3 rounded transition-colors"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleDenyClick(approval)}
+                    disabled={processing}
+                    className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-medium py-2 px-3 rounded transition-colors"
+                  >
+                    Deny
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* TEST: Deny Modal temporarily disabled for minimal rendering test */}
-      {/*
+      {/* Deny Modal */}
       {denyModalOpen && selectedApproval && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full p-6">
@@ -235,7 +262,6 @@ export function ApprovalWidget() {
           </div>
         </div>
       )}
-      */}
     </>
   )
 }
