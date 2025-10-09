@@ -1,19 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 // Force dynamic rendering to avoid build-time environment variable issues
 export const dynamic = 'force-dynamic'
 
-export default function SignInPage() {
+function SignInForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirectTo')
+
+  useEffect(() => {
+    // Show message if redirected from a protected route
+    if (redirectTo) {
+      setMessage('Please sign in to continue')
+    }
+  }, [redirectTo])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,7 +39,8 @@ export default function SignInPage() {
 
       if (error) throw error
 
-      router.push('/dashboard')
+      // Redirect to the original page or dashboard
+      router.push(redirectTo || '/dashboard')
       router.refresh()
     } catch (error: any) {
       setError(error.message || 'Failed to sign in')
@@ -50,6 +61,12 @@ export default function SignInPage() {
       </div>
 
       <form onSubmit={handleSignIn} className="space-y-6">
+        {message && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 px-4 py-3 rounded">
+            {message}
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded">
             {error}
@@ -113,5 +130,19 @@ export default function SignInPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-8">
+        <div className="text-center">
+          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <SignInForm />
+    </Suspense>
   )
 }

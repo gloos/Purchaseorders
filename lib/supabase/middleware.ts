@@ -54,7 +54,25 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Define public routes that don't require authentication
+  const publicRoutes = ['/signin', '/signup', '/signup/invited', '/invoice-upload', '/auth/callback', '/auth/signout']
+  const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+
+  // If user is not authenticated and trying to access a protected route
+  if (!user && !isPublicRoute && !isApiRoute) {
+    // Redirect to signin with return URL
+    const redirectUrl = new URL('/signin', request.url)
+    redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // If user is authenticated and trying to access signin/signup, redirect to dashboard
+  if (user && (request.nextUrl.pathname === '/signin' || request.nextUrl.pathname === '/signup')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
 
   return response
 }
