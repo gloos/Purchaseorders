@@ -1,8 +1,17 @@
 # ApprovalWidget Router Mounting Error - Investigation Report
 
+## ✅ RESOLVED
+
+**Root Cause:** Prisma Decimal.toFixed() during render conflicts with App Router mounting
+**Solution:** Serialize Decimals to strings in API response
+**Resolution Date:** 2025-01-09
+**Commits:** `868a023`, `0968118`
+
+---
+
 ## Executive Summary
 
-The ApprovalWidget component causes a consistent `"invariant expected app router to be mounted"` error in production (Next.js 14.2.33) when displaying approval data. The error occurs specifically when the widget renders pending approval items, but NOT when the widget is empty.
+The ApprovalWidget component was causing a consistent `"invariant expected app router to be mounted"` error in production (Next.js 14.2.33) when displaying approval data. The error occurred specifically when the widget rendered pending approval items, but NOT when the widget was empty.
 
 ## Project Context
 
@@ -179,3 +188,99 @@ Latest commit with issue: `68a2c02`
 ## Key Takeaway
 
 **The error is specifically triggered by rendering approval list items with real data.** Any solution must address why mapping over and rendering approval objects causes a router mounting conflict in Next.js App Router.
+
+---
+
+## ✅ RESOLUTION
+
+### Root Cause Identified
+
+Through systematic testing, the issue was isolated to **Prisma Decimal.toFixed() conversion during component render**:
+
+1. ✅ Empty widget works
+2. ✅ Minimal rendering (just IDs) works
+3. ✅ Nested object access works
+4. ✅ String fields work
+5. ❌ **Decimal.toFixed() causes router error** ← THE CULPRIT
+
+**Why it failed:**
+- Prisma returns `Decimal` types as special objects from the `decimal.js` library
+- Not native JavaScript numbers
+- Calling `.toFixed()` on Decimal objects during render performs synchronous conversion
+- This conversion conflicts with Next.js App Router initialization
+- Result: "invariant expected app router to be mounted" error
+
+### Solution Implemented
+
+**Serialize Decimals to strings in the API response:**
+
+```typescript
+// API: /app/api/approvals/pending/route.ts
+const serializedApprovals = pendingApprovals.map(approval => ({
+  ...approval,
+  amount: approval.amount.toString(),
+  purchaseOrder: {
+    ...approval.purchaseOrder,
+    subtotalAmount: approval.purchaseOrder.subtotalAmount.toString(),
+    totalAmount: approval.purchaseOrder.totalAmount.toString(),
+  },
+}))
+```
+
+**Frontend receives plain strings:**
+
+```typescript
+// Component: /components/approval-widget.tsx
+interface ApprovalRequest {
+  amount: string // Changed from number
+  purchaseOrder: {
+    totalAmount: string // Changed from number
+    // ...
+  }
+}
+
+// Render with native JavaScript
+{parseFloat(approval.purchaseOrder.totalAmount).toFixed(2)}
+```
+
+### Benefits of This Solution
+
+1. **No Decimal library operations during render** - Frontend uses native `parseFloat().toFixed()`
+2. **Type-safe** - TypeScript interface updated to reflect string types
+3. **Performance** - No synchronous Decimal conversion blocking render
+4. **Maintainable** - Clear separation of concerns (API handles conversion)
+5. **Scalable** - Same pattern can be applied to other Decimal fields
+
+### Testing Results
+
+After implementing the fix:
+- ✅ Widget loads without router error
+- ✅ Displays all PO details correctly
+- ✅ Currency amounts format properly (e.g., "GBP 106.80")
+- ✅ Approve/Deny buttons work
+- ✅ Link navigation works
+- ✅ Date formatting works (not related to issue, but confirmed safe)
+
+### Lessons Learned
+
+1. **Prisma Decimal types require serialization** for client-side rendering
+2. **Systematic testing is essential** - Removing elements one by one isolated the issue
+3. **Not all .toFixed() calls are equal** - Decimal.toFixed() ≠ Number.toFixed()
+4. **API serialization is preferable** to client-side type conversion for complex types
+
+### Prevention for Future
+
+**For all API endpoints returning Prisma data with Decimal or DateTime types:**
+
+```typescript
+// Always serialize before sending to client
+return NextResponse.json({
+  data: results.map(item => ({
+    ...item,
+    decimalField: item.decimalField.toString(),
+    dateField: item.dateField.toISOString(),
+  }))
+})
+```
+
+This pattern prevents similar issues across the application.
