@@ -376,12 +376,10 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Approval Widget - Only for ADMIN (SUPER_ADMIN temporarily disabled for debugging) */}
-          {!userRoleLoading && userRole === 'ADMIN' && (
-            <div className="mb-8">
-              <ApprovalWidget />
-            </div>
-          )}
+          {/* Approval Widget - Rendered but hidden until role is loaded */}
+          <div className={`mb-8 ${!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') ? '' : 'hidden'}`}>
+            <ApprovalWidget />
+          </div>
 
           {/* Recent Activity */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
