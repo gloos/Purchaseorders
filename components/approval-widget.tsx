@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 interface ApprovalRequest {
   id: string
@@ -27,14 +28,12 @@ interface ApprovalRequest {
 export function ApprovalWidget() {
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
   const [loading, setLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
   const [denyModalOpen, setDenyModalOpen] = useState(false)
   const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null)
   const [denyReason, setDenyReason] = useState('')
   const [processing, setProcessing] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     fetchPendingApprovals()
   }, [])
 
@@ -115,7 +114,7 @@ export function ApprovalWidget() {
     }
   }
 
-  if (!mounted || loading) {
+  if (loading) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
@@ -168,9 +167,12 @@ export function ApprovalWidget() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                    <Link
+                      href={`/purchase-orders/${approval.purchaseOrder.id}`}
+                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                    >
                       PO #{approval.purchaseOrder.poNumber}
-                    </span>
+                    </Link>
                     <p className="text-sm text-slate-900 dark:text-white mt-1">
                       {approval.purchaseOrder.title}
                     </p>

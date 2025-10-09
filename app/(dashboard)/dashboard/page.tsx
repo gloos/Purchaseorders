@@ -2,9 +2,27 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Navbar } from '@/components/navbar'
-// import { ApprovalWidget } from '@/components/approval-widget' // TEMPORARILY REMOVED FOR DEBUGGING
+
+// Dynamically import ApprovalWidget with client-side only rendering
+const ApprovalWidget = dynamic(
+  () => import('@/components/approval-widget').then(mod => mod.ApprovalWidget),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          Pending Approvals
+        </h3>
+        <div className="text-center text-slate-600 dark:text-slate-400 py-4">
+          Loading...
+        </div>
+      </div>
+    )
+  }
+)
 
 interface DashboardAnalytics {
   summary: {
@@ -69,13 +87,12 @@ const STATUS_LABELS: Record<string, string> = {
 export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
-  // TEMPORARILY COMMENTED FOR DEBUGGING
-  // const [userRole, setUserRole] = useState<string | null>(null)
-  // const [userRoleLoading, setUserRoleLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [userRoleLoading, setUserRoleLoading] = useState(true)
 
   useEffect(() => {
     fetchAnalytics()
-    // fetchUserRole() // TEMPORARILY COMMENTED FOR DEBUGGING
+    fetchUserRole()
   }, [])
 
   const fetchAnalytics = async () => {
@@ -94,21 +111,20 @@ export default function DashboardPage() {
     }
   }
 
-  // TEMPORARILY COMMENTED FOR DEBUGGING
-  // const fetchUserRole = async () => {
-  //   try {
-  //     setUserRoleLoading(true)
-  //     const response = await fetch('/api/me')
-  //     if (response.ok) {
-  //       const data = await response.json()
-  //       setUserRole(data.role)
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching user role:', error)
-  //   } finally {
-  //     setUserRoleLoading(false)
-  //   }
-  // }
+  const fetchUserRole = async () => {
+    try {
+      setUserRoleLoading(true)
+      const response = await fetch('/api/me')
+      if (response.ok) {
+        const data = await response.json()
+        setUserRole(data.role)
+      }
+    } catch (error) {
+      console.error('Error fetching user role:', error)
+    } finally {
+      setUserRoleLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -378,10 +394,12 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Approval Widget - TEMPORARILY REMOVED FOR DEBUGGING */}
-          {/* <div className={`mb-8 ${!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') ? '' : 'hidden'}`}>
-            <ApprovalWidget />
-          </div> */}
+          {/* Approval Widget - Dynamically loaded client-side only */}
+          {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+            <div className="mb-8">
+              <ApprovalWidget />
+            </div>
+          )}
 
           {/* Recent Activity */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
