@@ -3,10 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Input, Textarea } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies'
 
 interface LineItem {
@@ -422,7 +419,7 @@ export default function EditPurchaseOrderPage() {
               />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Supplier Information */}
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
@@ -637,7 +634,6 @@ export default function EditPurchaseOrderPage() {
           </Link>
         </div>
       </form>
-      </div>
     </div>
   )
 }

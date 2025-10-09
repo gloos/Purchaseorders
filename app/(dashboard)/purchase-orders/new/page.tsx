@@ -774,7 +774,6 @@ export default function NewPurchaseOrderPage() {
           </div>
         </div>
       )}
-      </div>
     </div>
   )
 }
