@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Navbar } from '@/components/navbar'
+import { Card } from '@/components/ui/Card'
+import { MetricCard } from '@/components/ui/MetricCard'
+import { StatusBadge } from '@/components/ui/Badge'
 
 // Dynamically import ApprovalWidget with client-side only rendering
 const ApprovalWidget = dynamic(
@@ -128,7 +130,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center h-full py-12">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
       </div>
     )
@@ -141,161 +143,119 @@ export default function DashboardPage() {
   })) : []
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Navbar />
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8">Dashboard</h1>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8">Dashboard</h1>
+      {/* Analytics Cards */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <MetricCard
+          title="Total Purchase Orders"
+          value={analytics?.summary.totalPOs || 0}
+          iconColor="blue"
+          icon={
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          }
+        />
 
-          {/* Analytics Cards */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">
-                      Total Purchase Orders
-                    </dt>
-                    <dd className="text-2xl font-semibold text-slate-900 dark:text-white">
-                      {analytics?.summary.totalPOs || 0}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
+        <MetricCard
+          title="Total Value"
+          value={`£${(analytics?.summary.totalValue || 0).toFixed(2)}`}
+          iconColor="green"
+          icon={
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        />
+
+        <MetricCard
+          title="Pending"
+          value={(analytics?.summary.statusCounts.PENDING_APPROVAL || 0) + (analytics?.summary.statusCounts.DRAFT || 0)}
+          iconColor="yellow"
+          icon={
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        />
+
+        <MetricCard
+          title="Bills Ready to Create"
+          value={analytics?.billsReady.count || 0}
+          subtitle={`£${(analytics?.billsReady.value || 0).toFixed(2)}`}
+          iconColor="teal"
+          icon={
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          }
+        />
+      </div>
+
+      {/* Outstanding Amounts */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-8">
+        <Card padding="md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Pending Approval
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
+                £{(analytics?.outstandingAmounts.pendingApproval || 0).toFixed(2)}
+              </p>
             </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
-                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">
-                      Total Value
-                    </dt>
-                    <dd className="text-2xl font-semibold text-slate-900 dark:text-white">
-                      £{(analytics?.summary.totalValue || 0).toFixed(2)}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">
-                      Pending
-                    </dt>
-                    <dd className="text-2xl font-semibold text-slate-900 dark:text-white">
-                      {(analytics?.summary.statusCounts.PENDING_APPROVAL || 0) + (analytics?.summary.statusCounts.DRAFT || 0)}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-teal-500 rounded-md p-3">
-                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">
-                      Bills Ready to Create
-                    </dt>
-                    <dd className="text-2xl font-semibold text-slate-900 dark:text-white">
-                      {analytics?.billsReady.count || 0}
-                    </dd>
-                    <dd className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      £{(analytics?.billsReady.value || 0).toFixed(2)}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
+            <div className="flex-shrink-0">
+              <svg className="h-8 w-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
           </div>
+        </Card>
 
-          {/* Outstanding Amounts */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-8">
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Pending Approval
-                  </p>
-                  <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
-                    £{(analytics?.outstandingAmounts.pendingApproval || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                  <svg className="h-8 w-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
+        <Card padding="md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Sent (Committed)
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
+                £{(analytics?.outstandingAmounts.sent || 0).toFixed(2)}
+              </p>
             </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Sent (Committed)
-                  </p>
-                  <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
-                    £{(analytics?.outstandingAmounts.sent || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                  <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Invoiced (Awaiting Payment)
-                  </p>
-                  <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
-                    £{(analytics?.outstandingAmounts.invoiced || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                  <svg className="h-8 w-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-              </div>
+            <div className="flex-shrink-0">
+              <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
             </div>
           </div>
+        </Card>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 mb-8">
-            {/* Status Distribution Chart */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">PO Status Distribution</h2>
+        <Card padding="md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Invoiced (Awaiting Payment)
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
+                £{(analytics?.outstandingAmounts.invoiced || 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <svg className="h-8 w-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 mb-8">
+        {/* Status Distribution Chart */}
+        <Card padding="md">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">PO Status Distribution</h2>
               {statusData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -316,16 +276,16 @@ export default function DashboardPage() {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-[300px] flex items-center justify-center text-slate-500 dark:text-slate-400">
-                  No data available
-                </div>
-              )}
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-slate-500 dark:text-slate-400">
+              No data available
             </div>
+          )}
+        </Card>
 
-            {/* Monthly Trends Chart */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Monthly PO Trends</h2>
+        {/* Monthly Trends Chart */}
+        <Card padding="md">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Monthly PO Trends</h2>
               {analytics && analytics.monthlyData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={analytics.monthlyData}>
@@ -337,16 +297,16 @@ export default function DashboardPage() {
                     <Bar dataKey="count" fill="#60a5fa" name="Number of POs" />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-[300px] flex items-center justify-center text-slate-500 dark:text-slate-400">
-                  No data available
-                </div>
-              )}
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-slate-500 dark:text-slate-400">
+              No data available
             </div>
+          )}
+        </Card>
 
-            {/* Top Suppliers Chart */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Top 5 Suppliers</h2>
+        {/* Top Suppliers Chart */}
+        <Card padding="md">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Top 5 Suppliers</h2>
               {analytics && analytics.topSuppliers.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={analytics.topSuppliers} layout="vertical">
@@ -357,111 +317,99 @@ export default function DashboardPage() {
                     <Bar dataKey="value" fill="#34d399" name="Total Spend" />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-[300px] flex items-center justify-center text-slate-500 dark:text-slate-400">
-                  No data available
-                </div>
-              )}
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-slate-500 dark:text-slate-400">
+              No data available
             </div>
-          </div>
+          )}
+        </Card>
+      </div>
 
-          {/* FreeAgent Sync Status */}
-          {analytics?.freeAgentSync.isConnected && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 mb-8">
-              <div className="flex items-center justify-between">
+      {/* FreeAgent Sync Status */}
+      {analytics?.freeAgentSync.isConnected && (
+        <Card padding="md" className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">FreeAgent Sync Status</h2>
+              <div className="flex items-center gap-6 mt-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">FreeAgent Sync Status</h2>
-                  <div className="flex items-center gap-6 mt-4">
-                    <div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Bills Created This Month</p>
-                      <p className="text-2xl font-semibold text-slate-900 dark:text-white">{analytics.freeAgentSync.billsCreatedThisMonth}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Last Sync</p>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">
-                        {analytics.freeAgentSync.lastSync
-                          ? new Date(analytics.freeAgentSync.lastSync).toLocaleString()
-                          : 'Never'}
-                      </p>
-                    </div>
-                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Bills Created This Month</p>
+                  <p className="text-2xl font-semibold text-slate-900 dark:text-white">{analytics.freeAgentSync.billsCreatedThisMonth}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-green-600 dark:text-green-400">Connected</span>
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Last Sync</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">
+                    {analytics.freeAgentSync.lastSync
+                      ? new Date(analytics.freeAgentSync.lastSync).toLocaleString()
+                      : 'Never'}
+                  </p>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Approval Widget - Dynamically loaded client-side only */}
-          {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
-            <div className="mb-8">
-              <ApprovalWidget />
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Connected</span>
             </div>
-          )}
+          </div>
+        </Card>
+      )}
 
-          {/* Recent Activity */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
+      {/* Approval Widget - Dynamically loaded client-side only */}
+      {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+        <div className="mb-8">
+          <ApprovalWidget />
+        </div>
+      )}
+
+      {/* Recent Activity */}
+      <Card padding="none">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Activity</h2>
             </div>
             <div className="divide-y divide-slate-200 dark:divide-slate-700">
-              {analytics && analytics.recentActivity.length > 0 ? (
-                analytics.recentActivity.map((po) => (
-                  <Link
-                    key={po.id}
-                    href={`/purchase-orders/${po.id}`}
-                    className="block px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">
-                            {po.poNumber}
-                          </p>
-                          <span className={`ml-3 px-2 py-1 text-xs font-semibold rounded-full ${
-                            po.status === 'DRAFT' ? 'bg-gray-100 text-gray-800' :
-                            po.status === 'PENDING_APPROVAL' ? 'bg-yellow-100 text-yellow-800' :
-                            po.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                            po.status === 'SENT' ? 'bg-blue-100 text-blue-800' :
-                            po.status === 'RECEIVED' ? 'bg-purple-100 text-purple-800' :
-                            po.status === 'INVOICED' ? 'bg-teal-100 text-teal-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {STATUS_LABELS[po.status] || po.status}
-                          </span>
-                          {po.status === 'INVOICED' && (
-                            <span className="ml-2 px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">
-                              → Create Bill
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{po.title}</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-                          Supplier: {po.supplierName}
-                        </p>
-                      </div>
-                      <div className="ml-4 text-right">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                          £{po.totalAmount.toFixed(2)}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {new Date(po.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
+          {analytics && analytics.recentActivity.length > 0 ? (
+            analytics.recentActivity.map((po) => (
+              <Link
+                key={po.id}
+                href={`/purchase-orders/${po.id}`}
+                className="block px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">
+                        {po.poNumber}
+                      </p>
+                      <StatusBadge status={po.status as any} size="sm" />
+                      {po.status === 'INVOICED' && (
+                        <span className="px-2 py-1 text-xs font-semibold rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                          → Create Bill
+                        </span>
+                      )}
                     </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-                  No purchase orders yet. <Link href="/purchase-orders/new" className="text-blue-600 hover:text-blue-700">Create your first PO</Link>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{po.title}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+                      Supplier: {po.supplierName}
+                    </p>
+                  </div>
+                  <div className="ml-4 text-right">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      £{po.totalAmount.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {new Date(po.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-              )}
+              </Link>
+            ))
+          ) : (
+            <div className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+              No purchase orders yet. <Link href="/purchase-orders/new" className="text-blue-600 hover:text-blue-700">Create your first PO</Link>
             </div>
-          </div>
+          )}
         </div>
-      </main>
+      </Card>
     </div>
   )
 }
