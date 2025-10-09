@@ -69,10 +69,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // If user is authenticated and trying to access signin/signup, redirect to dashboard
-  if (user && (request.nextUrl.pathname === '/signin' || request.nextUrl.pathname === '/signup')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
+  // Note: We don't redirect authenticated users away from /signin or /signup
+  // The client-side code handles post-login redirects to avoid conflicts
 
   return response
 }
