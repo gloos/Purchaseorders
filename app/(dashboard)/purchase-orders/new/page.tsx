@@ -576,16 +576,22 @@ export default function NewPurchaseOrderPage() {
         </Card>
 
         {/* Line Items */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Line Items</h2>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               type="button"
               onClick={addLineItem}
-              className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              }
             >
-              + Add Item
-            </button>
+              Add Item
+            </Button>
           </div>
           <div className="space-y-4">
             {lineItems.map((item, index) => (
@@ -595,13 +601,15 @@ export default function NewPurchaseOrderPage() {
                     Item {index + 1}
                   </span>
                   {lineItems.length > 1 && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       type="button"
                       onClick={() => removeLineItem(item.id)}
-                      className="text-red-600 hover:text-red-700 text-sm"
+                      className="text-red-600 hover:text-red-700"
                     >
                       Remove
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -679,7 +687,7 @@ export default function NewPurchaseOrderPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Notes */}
         <Card padding="lg">
@@ -726,41 +734,42 @@ export default function NewPurchaseOrderPage() {
             </p>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Approver <span className="text-red-500">*</span>
-              </label>
-              <select
+              <Select
+                label="Approver"
                 value={selectedApproverId}
                 onChange={(e) => setSelectedApproverId(e.target.value)}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="-- Select an approver --"
+                required
               >
-                <option value="">-- Select an approver --</option>
                 {approvers.map((approver) => (
                   <option key={approver.id} value={approver.id}>
                     {approver.name || approver.email} ({approver.role})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="flex gap-3 justify-end">
-              <button
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={() => {
                   setShowApproverModal(false)
                   setSelectedApproverId('')
                   setPendingPurchaseOrderData(null)
                 }}
-                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg transition-colors"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
                 onClick={handleApproverSubmit}
                 disabled={!selectedApproverId || submitting}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                isLoading={submitting}
               >
-                {submitting ? 'Submitting...' : 'Submit for Approval'}
-              </button>
+                Submit for Approval
+              </Button>
             </div>
           </div>
         </div>
