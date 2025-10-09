@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { sendApprovalGrantedEmail } from '@/lib/email/approval-notifications'
+import { sendPOToSupplier } from '@/lib/email/send-po-to-supplier'
 import * as Sentry from '@sentry/nextjs'
 
 // POST /api/approvals/[id]/approve
@@ -99,7 +100,16 @@ export async function POST(
       }
     })
 
-    // Send email notification to requester
+    // Send PO to supplier
+    try {
+      await sendPOToSupplier(result.purchaseOrder.id)
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      console.error('Failed to send PO to supplier:', emailError)
+      Sentry.captureException(emailError)
+    }
+
+    // Send approval notification to requester
     try {
       await sendApprovalGrantedEmail({
         to: result.requester.email,
@@ -110,7 +120,7 @@ export async function POST(
       })
     } catch (emailError) {
       // Log email error but don't fail the request
-      console.error('Failed to send approval granted email:', emailError)
+      console.error('Failed to send approval granted email to requester:', emailError)
       Sentry.captureException(emailError)
     }
 
