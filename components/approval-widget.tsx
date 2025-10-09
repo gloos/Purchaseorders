@@ -159,57 +159,15 @@ export function ApprovalWidget() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* TEST: Render only first approval without map() */}
-            {approvals[0] && (
-              <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">
-                      PO #{approvals[0].purchaseOrder.poNumber}
-                    </p>
-                    <p className="text-sm text-slate-900 dark:text-white mt-1">
-                      {approvals[0].purchaseOrder.title}
-                    </p>
-                  </div>
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {approvals[0].purchaseOrder.currency} {approvals[0].purchaseOrder.totalAmount.toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                  <p>Supplier: {approvals[0].purchaseOrder.supplierName}</p>
-                  <p>
-                    Requested by: {approvals[0].requester.name || approvals[0].requester.email}
-                  </p>
-                  <p>
-                    Created: {approvals[0].createdAt}
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleApprove(approvals[0].id)}
-                    disabled={processing}
-                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-medium py-2 px-3 rounded transition-colors"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleDenyClick(approvals[0])}
-                    disabled={processing}
-                    className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-medium py-2 px-3 rounded transition-colors"
-                  >
-                    Deny
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {approvals.length > 1 && (
-              <p className="text-xs text-slate-500 italic">
-                TEST MODE: Only showing first approval. {approvals.length - 1} more hidden.
+            {/* TEST: Absolute minimal rendering - just count and IDs */}
+            <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-4">
+              <p className="text-sm text-slate-900 dark:text-white">
+                TEST MODE: You have {approvals.length} pending approval(s)
               </p>
-            )}
+              <p className="text-xs text-slate-500 mt-2">
+                Approval IDs: {approvals.map(a => a.id).join(', ')}
+              </p>
+            </div>
           </div>
         )}
       </div>
