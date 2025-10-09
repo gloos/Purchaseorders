@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
-import { Decimal } from '@prisma/client/runtime/library'
 
 // POST /api/purchase-orders/submit-for-approval
 // Submit a PO for approval (for MANAGER role when PO >= threshold)
