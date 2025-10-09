@@ -27,10 +27,13 @@ interface ApprovalRequest {
 export function ApprovalWidget() {
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
   const [loading, setLoading] = useState(true)
+  // TEST: State temporarily disabled for minimal rendering test
+  /*
   const [denyModalOpen, setDenyModalOpen] = useState(false)
   const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null)
   const [denyReason, setDenyReason] = useState('')
   const [processing, setProcessing] = useState(false)
+  */
 
   useEffect(() => {
     fetchPendingApprovals()
@@ -51,6 +54,8 @@ export function ApprovalWidget() {
     }
   }
 
+  // TEST: Functions temporarily disabled for minimal rendering test
+  /*
   const handleApprove = async (approvalId: string) => {
     if (!confirm('Are you sure you want to approve this purchase order?')) {
       return
@@ -112,6 +117,7 @@ export function ApprovalWidget() {
       setProcessing(false)
     }
   }
+  */
 
   if (loading) {
     return (
@@ -172,7 +178,8 @@ export function ApprovalWidget() {
         )}
       </div>
 
-      {/* Deny Modal */}
+      {/* TEST: Deny Modal temporarily disabled for minimal rendering test */}
+      {/*
       {denyModalOpen && selectedApproval && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full p-6">
@@ -217,6 +224,7 @@ export function ApprovalWidget() {
           </div>
         </div>
       )}
+      */}
     </>
   )
 }
