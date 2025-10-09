@@ -165,7 +165,7 @@ export function ApprovalWidget() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* TEST: Add nested object access (strings only, no Decimal/Date) */}
+            {/* TEST: Add Decimal.toFixed() conversion */}
             {approvals.map((approval) => (
               <div key={approval.id} className="border border-slate-200 dark:border-slate-600 rounded-lg p-4">
                 <p className="text-sm text-slate-900 dark:text-white">
@@ -173,6 +173,9 @@ export function ApprovalWidget() {
                 </p>
                 <p className="text-sm text-slate-900 dark:text-white">
                   {approval.purchaseOrder.title}
+                </p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {approval.purchaseOrder.currency} {approval.purchaseOrder.totalAmount.toFixed(2)}
                 </p>
                 <p className="text-xs text-slate-500">
                   Supplier: {approval.purchaseOrder.supplierName}
