@@ -231,9 +231,20 @@ export default function NewPurchaseOrderPage() {
     // VIEWER cannot create POs
     if (user.role === 'VIEWER') return false
 
-    // SUPER_ADMIN and ADMIN auto-approve
-    if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
+    // SUPER_ADMIN always auto-approves
+    if (user.role === 'SUPER_ADMIN') {
       return false
+    }
+
+    // ADMIN respects autoApproveAdmin setting
+    if (user.role === 'ADMIN') {
+      if (organization.autoApproveAdmin) {
+        return false
+      }
+      // If auto-approve is disabled, ADMINs follow the threshold rule
+      const subtotal = calculateSubtotal()
+      const threshold = organization.approvalThreshold ?? 50
+      return subtotal >= threshold
     }
 
     // MANAGER needs approval if subtotal >= threshold
