@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // 3. Check permissions - only MANAGER and ADMIN can invite users
-    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN') {
+    // 3. Check permissions - only MANAGER, ADMIN, and SUPER_ADMIN can invite users
+    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN' && dbUser.role !== 'SUPER_ADMIN') {
       return NextResponse.json(
         { error: 'Insufficient permissions. Only Managers and Admins can invite users.' },
         { status: 403 }
@@ -151,8 +151,8 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // 3. Check permissions - only MANAGER and ADMIN can view invitations
-    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN') {
+    // 3. Check permissions - only MANAGER, ADMIN, and SUPER_ADMIN can view invitations
+    if (dbUser.role !== 'MANAGER' && dbUser.role !== 'ADMIN' && dbUser.role !== 'SUPER_ADMIN') {
       return NextResponse.json(
         { error: 'Insufficient permissions. Only Managers and Admins can view invitations.' },
         { status: 403 }

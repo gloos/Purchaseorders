@@ -180,6 +180,7 @@ export default function UsersPage() {
                         disabled={updating === user.id}
                         className="border border-slate-300 dark:border-slate-600 rounded px-3 py-1 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
+                        <option value="SUPER_ADMIN">Super Admin</option>
                         <option value="ADMIN">Admin</option>
                         <option value="MANAGER">Manager</option>
                         <option value="VIEWER">Viewer</option>
@@ -199,6 +200,12 @@ export default function UsersPage() {
         <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Role Permissions</h2>
           <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Super Admin</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                Platform owner with complete control over all features, user management, organization settings, and purchase order operations. Highest level of access.
+              </p>
+            </div>
             <div>
               <h3 className="text-sm font-medium text-purple-800 dark:text-purple-200">Admin</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
