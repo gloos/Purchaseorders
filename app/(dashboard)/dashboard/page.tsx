@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Navbar } from '@/components/navbar'
 import { ApprovalWidget } from '@/components/approval-widget'
@@ -68,7 +67,6 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 export default function DashboardPage() {
-  const router = useRouter()
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null)
