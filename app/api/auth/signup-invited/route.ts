@@ -85,6 +85,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 6b. Explicitly update user to confirm email (backup in case email_confirm doesn't work)
+    // This ensures email is confirmed even if the parameter above is ignored
+    const { error: confirmError } = await supabase.auth.admin.updateUserById(
+      authData.user.id,
+      { email_confirm: true }
+    )
+
+    if (confirmError) {
+      console.error('Failed to confirm email (continuing anyway):', confirmError)
+      // Don't fail the request, just log the error
+    }
+
     // 7. Create app user record
     await prisma.user.create({
       data: {
