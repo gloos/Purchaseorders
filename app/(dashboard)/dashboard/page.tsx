@@ -86,7 +86,7 @@ export default function DashboardPage() {
         const data = await response.json()
         setAnalytics(data)
       } else if (response.status === 401) {
-        router.push('/login')
+        router.push('/signin')
       }
     } catch (error) {
       console.error('Error fetching analytics:', error)

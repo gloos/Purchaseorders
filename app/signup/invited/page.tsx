@@ -87,7 +87,7 @@ function InvitedSignupContent() {
 
       if (response.ok) {
         // Success! Redirect to login
-        router.push('/login?message=Account created successfully. Please sign in.')
+        router.push('/signin?message=Account created successfully. Please sign in.')
       } else {
         setError(data.error || 'Failed to create account')
       }
@@ -119,7 +119,7 @@ function InvitedSignupContent() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Invalid Invitation</h1>
           <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
           <Link
-            href="/login"
+            href="/signin"
             className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             Go to Login
@@ -228,7 +228,7 @@ function InvitedSignupContent() {
 
         <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+          <Link href="/signin" className="text-blue-600 hover:text-blue-700 font-medium">
             Sign in
           </Link>
         </div>
