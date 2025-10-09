@@ -11,6 +11,7 @@ interface SendInvitationEmailParams {
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
+  SUPER_ADMIN: 'Super Administrator',
   ADMIN: 'Administrator',
   MANAGER: 'Manager',
   VIEWER: 'Viewer'
