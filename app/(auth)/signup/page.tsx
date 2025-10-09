@@ -3,19 +3,39 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 // Force dynamic rendering to avoid build-time environment variable issues
 export const dynamic = 'force-dynamic'
 
+type Step = 'account' | 'organization' | 'complete'
+
 export default function SignUpPage() {
+  const router = useRouter()
+  const [step, setStep] = useState<Step>('account')
+
+  // Account creation fields
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+
+  // Organization creation fields
+  const [orgName, setOrgName] = useState('')
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  // Generate slug from organization name
+  const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim()
+  }
+
+  const handleAccountCreation = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
@@ -35,63 +55,75 @@ export default function SignUpPage() {
 
       if (error) throw error
 
-      setSuccess(true)
+      // Move to organization creation step
+      setStep('organization')
     } catch (error: any) {
-      setError(error.message || 'Failed to sign up')
+      setError(error.message || 'Failed to create account')
     } finally {
       setLoading(false)
     }
   }
 
-  if (success) {
-    return (
-      <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-8">
-        <div className="text-center">
-          <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4">
-            <svg
-              className="w-6 h-6 text-green-600 dark:text-green-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-            Check Your Email
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
-            We've sent you a confirmation link to <strong>{email}</strong>.
-            Please check your inbox and click the link to verify your account.
-          </p>
-          <Link
-            href="/signin"
-            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-          >
-            Back to Sign In
-          </Link>
-        </div>
-      </div>
-    )
+  const handleOrganizationCreation = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const slug = generateSlug(orgName)
+
+      if (!slug || slug.length < 3) {
+        throw new Error('Organization name must be at least 3 characters')
+      }
+
+      const response = await fetch('/api/organizations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: orgName, slug }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to create organization')
+      }
+
+      // Success - redirect to dashboard
+      router.push('/dashboard')
+    } catch (error: any) {
+      setError(error.message || 'Failed to create organization')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  return (
-    <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-8">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Create Account
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">
-          Get started with PO Tool
-        </p>
-      </div>
+  // Step 1: Account Creation
+  if (step === 'account') {
 
-      <form onSubmit={handleSignUp} className="space-y-6">
+    return (
+      <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-8">
+        {/* Progress indicator */}
+        <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-medium">
+              1
+            </div>
+            <div className="w-24 h-1 bg-slate-200 dark:bg-slate-600 mx-2"></div>
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-400 text-sm font-medium">
+              2
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Create Account
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">
+            Step 1 of 2: Your account details
+          </p>
+        </div>
+
+        <form onSubmit={handleAccountCreation} className="space-y-6">
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded">
             {error}
@@ -156,26 +188,120 @@ export default function SignUpPage() {
           </p>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-        >
-          {loading ? 'Creating account...' : 'Sign Up'}
-        </button>
-      </form>
-
-      <div className="mt-6 text-center">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Already have an account?{' '}
-          <Link
-            href="/signin"
-            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
           >
-            Sign in
-          </Link>
-        </p>
+            {loading ? 'Creating account...' : 'Continue'}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Already have an account?{' '}
+            <Link
+              href="/signin"
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  // Step 2: Organization Creation
+  if (step === 'organization') {
+    return (
+      <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-8">
+        {/* Progress indicator */}
+        <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white text-sm font-medium">
+              ✓
+            </div>
+            <div className="w-24 h-1 bg-blue-600 mx-2"></div>
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-medium">
+              2
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Create Organization
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">
+            Step 2 of 2: Set up your organization
+          </p>
+        </div>
+
+        <form onSubmit={handleOrganizationCreation} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label
+              htmlFor="orgName"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Organization Name
+            </label>
+            <input
+              id="orgName"
+              type="text"
+              value={orgName}
+              onChange={(e) => setOrgName(e.target.value)}
+              required
+              minLength={3}
+              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+              placeholder="Acme Corporation"
+              autoFocus
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              This will be displayed in the navigation bar
+            </p>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-blue-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  As the first user, you'll be set up as an Admin with full access to manage purchase orders, settings, and invite team members.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          >
+            {loading ? 'Setting up organization...' : 'Complete Setup'}
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  return null
 }

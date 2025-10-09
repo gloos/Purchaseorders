@@ -35,12 +35,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Organization slug already exists' }, { status: 400 })
     }
 
-    // Create organization and update user
+    // Create organization with approval workflow defaults
     const organization = await prisma.organization.create({
-      data: { name, slug }
+      data: {
+        name,
+        slug,
+        companyName: name, // Use organization name as display name
+        approvalThreshold: 50, // Default £50 threshold
+        autoApproveAdmin: true // Admins auto-approve their own POs
+      }
     })
 
-    // Create or update user with organization
+    // Create or update user with organization and set as ADMIN (first user)
     await prisma.user.upsert({
       where: { id: user.id },
       create: {
@@ -48,10 +54,21 @@ export async function POST(request: Request) {
         email: user.email!,
         name: user.user_metadata?.name || null,
         avatarUrl: user.user_metadata?.avatar_url || null,
-        organizationId: organization.id
+        organizationId: organization.id,
+        role: 'ADMIN' // First user is always ADMIN
       },
       update: {
-        organizationId: organization.id
+        organizationId: organization.id,
+        role: 'ADMIN' // Set as ADMIN if updating existing user
+      }
+    })
+
+    // Create PO number counter for the organization
+    await prisma.counter.create({
+      data: {
+        name: 'po_number',
+        organizationId: organization.id,
+        value: 0
       }
     })
 

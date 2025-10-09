@@ -30,12 +30,29 @@ interface TaxRate {
   isActive: boolean
 }
 
+interface User {
+  id: string
+  email: string
+  name: string | null
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'VIEWER'
+}
+
+interface Organization {
+  id: string
+  name: string
+  companyName: string | null
+  approvalThreshold: number | null
+  autoApproveAdmin: boolean
+}
+
 export default function NewPurchaseOrderPage() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [contacts, setContacts] = useState<Contact[]>([])
   const [taxRates, setTaxRates] = useState<TaxRate[]>([])
   const [selectedContactId, setSelectedContactId] = useState('')
+  const [user, setUser] = useState<User | null>(null)
+  const [organization, setOrganization] = useState<Organization | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -60,6 +77,7 @@ export default function NewPurchaseOrderPage() {
   useEffect(() => {
     fetchContacts()
     fetchTaxRates()
+    fetchUserAndOrganization()
   }, [])
 
   const fetchContacts = async () => {
@@ -93,6 +111,19 @@ export default function NewPurchaseOrderPage() {
       }
     } catch (error) {
       console.error('Error fetching tax rates:', error)
+    }
+  }
+
+  const fetchUserAndOrganization = async () => {
+    try {
+      const response = await fetch('/api/me')
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data)
+        setOrganization(data.organization)
+      }
+    } catch (error) {
+      console.error('Error fetching user and organization:', error)
     }
   }
 
@@ -193,29 +224,92 @@ export default function NewPurchaseOrderPage() {
     return { subtotal, tax: 0, total: subtotal }
   }
 
+  // Check if PO needs approval based on role and amount
+  const needsApproval = (): boolean => {
+    if (!user || !organization) return false
+
+    // VIEWER cannot create POs
+    if (user.role === 'VIEWER') return false
+
+    // SUPER_ADMIN and ADMIN auto-approve
+    if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
+      return false
+    }
+
+    // MANAGER needs approval if subtotal >= threshold
+    if (user.role === 'MANAGER') {
+      const subtotal = calculateSubtotal()
+      const threshold = organization.approvalThreshold ?? 50
+      return subtotal >= threshold
+    }
+
+    return false
+  }
+
+  const getSubmitButtonText = (): string => {
+    if (submitting) {
+      return needsApproval() ? 'Submitting for approval...' : 'Creating...'
+    }
+    return needsApproval() ? 'Submit for Approval' : 'Create Purchase Order'
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
 
     try {
-      const response = await fetch('/api/purchase-orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...formData,
-          deliveryDate: formData.deliveryDate || null,
-          lineItems: lineItems.map(({ id, ...item }) => item)
-        })
-      })
+      // Calculate totals
+      const { subtotal, tax, total } = calculateTax()
 
-      if (response.ok) {
-        const data = await response.json()
-        router.push(`/purchase-orders/${data.id}`)
+      // Prepare PO data
+      const purchaseOrderData = {
+        ...formData,
+        deliveryDate: formData.deliveryDate || null,
+        subtotalAmount: subtotal,
+        taxAmount: tax,
+        totalAmount: total,
+        lineItems: lineItems.map(({ id, ...item }) => ({
+          ...item,
+          totalPrice: item.quantity * parseFloat(item.unitPrice || '0')
+        }))
+      }
+
+      // Check if approval is needed
+      if (needsApproval()) {
+        // Submit for approval
+        const response = await fetch('/api/purchase-orders/submit-for-approval', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ purchaseOrderData })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          alert('Purchase order submitted for approval')
+          router.push(`/purchase-orders/${data.purchaseOrder.id}`)
+        } else {
+          const error = await response.json()
+          alert(error.error || 'Failed to submit for approval')
+        }
       } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to create purchase order')
+        // Create normally (auto-approved)
+        const response = await fetch('/api/purchase-orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(purchaseOrderData)
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          router.push(`/purchase-orders/${data.id}`)
+        } else {
+          const error = await response.json()
+          alert(error.error || 'Failed to create purchase order')
+        }
       }
     } catch (error) {
       console.error('Error creating purchase order:', error)
@@ -571,10 +665,10 @@ export default function NewPurchaseOrderPage() {
         <div className="flex gap-4">
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !user || user.role === 'VIEWER'}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50"
           >
-            {submitting ? 'Creating...' : 'Create Purchase Order'}
+            {user && user.role === 'VIEWER' ? 'No Permission' : getSubmitButtonText()}
           </button>
           <Link
             href="/purchase-orders"

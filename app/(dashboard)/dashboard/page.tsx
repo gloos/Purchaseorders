@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Navbar } from '@/components/navbar'
+import { ApprovalWidget } from '@/components/approval-widget'
 
 interface DashboardAnalytics {
   summary: {
@@ -70,9 +71,11 @@ export default function DashboardPage() {
   const router = useRouter()
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAnalytics()
+    fetchUserRole()
   }, [])
 
   const fetchAnalytics = async () => {
@@ -89,6 +92,18 @@ export default function DashboardPage() {
       console.error('Error fetching analytics:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchUserRole = async () => {
+    try {
+      const response = await fetch('/api/me')
+      if (response.ok) {
+        const data = await response.json()
+        setUserRole(data.role)
+      }
+    } catch (error) {
+      console.error('Error fetching user role:', error)
     }
   }
 
@@ -357,6 +372,13 @@ export default function DashboardPage() {
                   <span className="text-sm font-medium text-green-600 dark:text-green-400">Connected</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Approval Widget - Only for ADMIN and SUPER_ADMIN */}
+          {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+            <div className="mb-8">
+              <ApprovalWidget />
             </div>
           )}
 

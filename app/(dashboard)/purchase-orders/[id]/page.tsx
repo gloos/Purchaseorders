@@ -7,6 +7,7 @@ import { format } from 'date-fns'
 import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
 import { CreateBillModal } from '@/components/create-bill-modal'
+import { AuditTrail } from '@/components/audit-trail'
 
 type POStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SENT' | 'RECEIVED' | 'INVOICED' | 'CANCELLED'
 
@@ -534,6 +535,9 @@ export default function PurchaseOrderDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Approval Audit Trail */}
+        {po && <AuditTrail purchaseOrderId={po.id} />}
       </div>
 
       {/* Bill Creation Modal */}
