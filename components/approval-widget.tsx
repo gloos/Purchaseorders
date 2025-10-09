@@ -165,15 +165,23 @@ export function ApprovalWidget() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* TEST: Absolute minimal rendering - just count and IDs */}
-            <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-4">
-              <p className="text-sm text-slate-900 dark:text-white">
-                TEST MODE: You have {approvals.length} pending approval(s)
-              </p>
-              <p className="text-xs text-slate-500 mt-2">
-                Approval IDs: {approvals.map(a => a.id).join(', ')}
-              </p>
-            </div>
+            {/* TEST: Add nested object access (strings only, no Decimal/Date) */}
+            {approvals.map((approval) => (
+              <div key={approval.id} className="border border-slate-200 dark:border-slate-600 rounded-lg p-4">
+                <p className="text-sm text-slate-900 dark:text-white">
+                  PO #{approval.purchaseOrder.poNumber}
+                </p>
+                <p className="text-sm text-slate-900 dark:text-white">
+                  {approval.purchaseOrder.title}
+                </p>
+                <p className="text-xs text-slate-500">
+                  Supplier: {approval.purchaseOrder.supplierName}
+                </p>
+                <p className="text-xs text-slate-500">
+                  Requested by: {approval.requester.email}
+                </p>
+              </div>
+            ))}
           </div>
         )}
       </div>
