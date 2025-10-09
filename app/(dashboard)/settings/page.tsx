@@ -99,6 +99,28 @@ export default function SettingsPage() {
               </div>
             </Link>
           )}
+
+          {/* Approval Settings */}
+          {hasPermission('canManageOrganization') && (
+            <Link
+              href="/settings/approvals"
+              className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
+            >
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-8 w-8 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Approval Settings</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    Configure approval workflow and thresholds
+                  </p>
+                </div>
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </div>

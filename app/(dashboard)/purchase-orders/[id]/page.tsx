@@ -221,22 +221,38 @@ export default function PurchaseOrderDetailPage() {
           </div>
           <div className="flex gap-2">
             {!userLoading && hasPermission('canViewPO') && (
-              <a
-                href={`/api/purchase-orders/${po.id}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                title="Download PDF"
-              >
-                Download PDF
-              </a>
+              po.status === 'PENDING_APPROVAL' ? (
+                <button
+                  disabled
+                  className="bg-purple-600 text-white font-medium py-2 px-4 rounded-lg opacity-50 cursor-not-allowed"
+                  title="PDF download disabled while pending approval"
+                >
+                  Download PDF
+                </button>
+              ) : (
+                <a
+                  href={`/api/purchase-orders/${po.id}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  title="Download PDF"
+                >
+                  Download PDF
+                </a>
+              )
             )}
             {!userLoading && hasPermission('canSendPO') && (
               <button
                 onClick={handleSendEmail}
-                disabled={sending || !po.supplierEmail}
+                disabled={sending || !po.supplierEmail || po.status === 'PENDING_APPROVAL'}
                 className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={!po.supplierEmail ? 'Supplier email required' : 'Send purchase order to supplier'}
+                title={
+                  po.status === 'PENDING_APPROVAL'
+                    ? 'Email sending disabled while pending approval'
+                    : !po.supplierEmail
+                      ? 'Supplier email required'
+                      : 'Send purchase order to supplier'
+                }
               >
                 {sending ? 'Sending...' : 'Send Email'}
               </button>

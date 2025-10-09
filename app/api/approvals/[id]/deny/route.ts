@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import { sendApprovalDeniedEmail } from '@/lib/email/approval-notifications'
+import * as Sentry from '@sentry/nextjs'
 
 // POST /api/approvals/[id]/deny
 // Deny a pending approval request (ADMIN/SUPER_ADMIN only)
@@ -92,11 +94,27 @@ export async function POST(
         approvalRequest: updatedApproval,
         purchaseOrder: updatedPO,
         requester: approvalRequest.requester,
+        poNumber: approvalRequest.purchaseOrder.poNumber,
+        poTitle: approvalRequest.purchaseOrder.title,
+        reason: reason || null,
       }
     })
 
-    // TODO: Send email notification to requester with denial reason
-    // This will be implemented in the email notifications task
+    // Send email notification to requester with denial reason
+    try {
+      await sendApprovalDeniedEmail({
+        to: result.requester.email,
+        poNumber: result.poNumber,
+        poTitle: result.poTitle,
+        denierName: user.name || user.email,
+        reason: result.reason || undefined,
+        poId: result.purchaseOrder.id
+      })
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      console.error('Failed to send approval denied email:', emailError)
+      Sentry.captureException(emailError)
+    }
 
     return NextResponse.json({
       success: true,

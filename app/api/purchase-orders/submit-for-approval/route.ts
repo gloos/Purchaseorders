@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendApprovalRequestEmail } from '@/lib/email/approval-notifications'
+import * as Sentry from '@sentry/nextjs'
 
 // POST /api/purchase-orders/submit-for-approval
 // Submit a PO for approval (for MANAGER role when PO >= threshold)
@@ -69,8 +71,37 @@ export async function POST(request: Request) {
       return { purchaseOrder, approvalRequest }
     })
 
-    // TODO: Send email notifications to all ADMINs
-    // This will be implemented in the email notifications task
+    // Send email notifications to all ADMINs and SUPER_ADMINs
+    try {
+      const admins = await prisma.user.findMany({
+        where: {
+          organizationId: user.organizationId!,
+          role: { in: ['ADMIN', 'SUPER_ADMIN'] }
+        },
+        select: {
+          email: true
+        }
+      })
+
+      const adminEmails = admins.map(admin => admin.email)
+
+      if (adminEmails.length > 0) {
+        await sendApprovalRequestEmail({
+          to: adminEmails,
+          poNumber: result.purchaseOrder.poNumber,
+          poTitle: result.purchaseOrder.title,
+          amount: result.purchaseOrder.subtotalAmount.toString(),
+          currency: result.purchaseOrder.currency,
+          requesterName: user.name || user.email,
+          supplierName: result.purchaseOrder.supplierName,
+          poId: result.purchaseOrder.id
+        })
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      console.error('Failed to send approval request email:', emailError)
+      Sentry.captureException(emailError)
+    }
 
     return NextResponse.json({
       purchaseOrder: result.purchaseOrder,

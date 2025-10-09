@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import { sendApprovalGrantedEmail } from '@/lib/email/approval-notifications'
+import * as Sentry from '@sentry/nextjs'
 
 // POST /api/approvals/[id]/approve
 // Approve a pending approval request (ADMIN/SUPER_ADMIN only)
@@ -92,11 +94,25 @@ export async function POST(
         approvalRequest: updatedApproval,
         purchaseOrder: updatedPO,
         requester: approvalRequest.requester,
+        poNumber: approvalRequest.purchaseOrder.poNumber,
+        poTitle: approvalRequest.purchaseOrder.title,
       }
     })
 
-    // TODO: Send email notification to requester
-    // This will be implemented in the email notifications task
+    // Send email notification to requester
+    try {
+      await sendApprovalGrantedEmail({
+        to: result.requester.email,
+        poNumber: result.poNumber,
+        poTitle: result.poTitle,
+        approverName: user.name || user.email,
+        poId: result.purchaseOrder.id
+      })
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      console.error('Failed to send approval granted email:', emailError)
+      Sentry.captureException(emailError)
+    }
 
     return NextResponse.json({
       success: true,
