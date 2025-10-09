@@ -377,11 +377,12 @@ export default function DashboardPage() {
           )}
 
           {/* Approval Widget - Only for ADMIN and SUPER_ADMIN */}
-          {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+          {/* TEMPORARILY COMMENTED OUT FOR DEBUGGING */}
+          {/* {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
             <div className="mb-8">
               <ApprovalWidget />
             </div>
-          )}
+          )} */}
 
           {/* Recent Activity */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
