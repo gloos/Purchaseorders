@@ -104,3 +104,36 @@ export async function getUserAndOrgOrThrow() {
     organizationId: dbUser.organizationId
   }
 }
+
+/**
+ * Get authenticated user with their role from database
+ * Returns user with role or null if not authenticated
+ */
+export async function getUserWithRole(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+
+  if (!authUser) {
+    return null
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: authUser.id },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      organizationId: true
+    }
+  })
+
+  if (!dbUser) {
+    return null
+  }
+
+  return {
+    id: dbUser.id,
+    email: dbUser.email,
+    role: dbUser.role,
+    organizationId: dbUser.organizationId
+  }
+}
