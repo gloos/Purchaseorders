@@ -166,7 +166,7 @@ export default function ApprovalSettingsPage() {
                     Auto-approve purchases by Admins
                   </span>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    When enabled, purchase orders created by Admins and Super Admins are automatically approved
+                    When enabled, purchase orders created by Admins are automatically approved
                     regardless of the amount. When disabled, even admin purchases above the threshold require
                     approval from another admin.
                   </p>
@@ -190,7 +190,7 @@ export default function ApprovalSettingsPage() {
                     <ul className="list-disc list-inside space-y-1">
                       <li>Managers can create POs below the threshold directly</li>
                       <li>POs at or above the threshold go to PENDING_APPROVAL status</li>
-                      <li>Admins and Super Admins receive email notifications for approval requests</li>
+                      <li>Admins receive email notifications for approval requests</li>
                       <li>Approved POs are automatically sent to suppliers</li>
                       <li>Denied POs return to DRAFT status and can be edited and resubmitted</li>
                     </ul>
