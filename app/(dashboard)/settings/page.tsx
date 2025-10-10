@@ -33,6 +33,25 @@ export default function SettingsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* My Profile */}
+          <Link href="/settings/profile">
+            <Card padding="lg" className="hover:border-blue-500 dark:hover:border-blue-500 transition-colors cursor-pointer">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-8 w-8 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">My Profile</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    Manage your personal account settings and password
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </Link>
+
           {/* User Management */}
           {hasPermission('canManageUsers') && (
             <Link href="/settings/users">

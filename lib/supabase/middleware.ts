@@ -66,7 +66,19 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/signin', '/signup', '/signup/invited', '/invoice-upload', '/auth/callback', '/auth/signout']
+  const publicRoutes = [
+    '/signin',
+    '/signup',
+    '/signup/invited',
+    '/invoice-upload',
+    '/auth/callback',
+    '/auth/signout',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+    '/terms',
+    '/privacy'
+  ]
   const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))
   const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
 
@@ -76,6 +88,12 @@ export async function updateSession(request: NextRequest) {
     const redirectUrl = new URL('/signin', request.url)
     redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
     return NextResponse.redirect(redirectUrl)
+  }
+
+  // If user is authenticated but email not verified, redirect to verify-email page
+  // (unless they're already on verify-email or a public/api route)
+  if (user && !user.email_confirmed_at && !request.nextUrl.pathname.startsWith('/verify-email') && !isPublicRoute && !isApiRoute) {
+    return NextResponse.redirect(new URL('/verify-email', request.url))
   }
 
   // Note: We don't redirect authenticated users away from /signin or /signup

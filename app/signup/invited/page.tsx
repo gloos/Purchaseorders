@@ -28,6 +28,7 @@ function InvitedSignupContent() {
     confirmPassword: ''
   })
   const [submitting, setSubmitting] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   useEffect(() => {
     if (!token) {
@@ -204,11 +205,33 @@ function InvitedSignupContent() {
             placeholder="Re-enter password"
           />
 
+          <div className="flex items-start">
+            <input
+              type="checkbox"
+              id="terms"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              required
+              disabled={submitting}
+              className="mt-1 h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="terms" className="ml-2 text-sm text-slate-600 dark:text-slate-400">
+              I agree to the{' '}
+              <Link href="/terms" target="_blank" className="text-blue-600 dark:text-blue-400 hover:underline">
+                Terms of Service
+              </Link>
+              {' '}and{' '}
+              <Link href="/privacy" target="_blank" className="text-blue-600 dark:text-blue-400 hover:underline">
+                Privacy Policy
+              </Link>
+            </label>
+          </div>
+
           <Button
             type="submit"
             variant="primary"
             size="md"
-            disabled={submitting}
+            disabled={submitting || !acceptedTerms}
             isLoading={submitting}
             className="w-full"
           >
