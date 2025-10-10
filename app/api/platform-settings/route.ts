@@ -21,7 +21,7 @@ const updateSchema = z.object({
  * GET /api/platform-settings
  * Retrieve current platform settings
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
     const user = await getUserWithRole(supabase)
