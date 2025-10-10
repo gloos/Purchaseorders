@@ -3,6 +3,9 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
 
 interface InvitationDetails {
   email: string
@@ -110,7 +113,7 @@ function InvitedSignupContent() {
   if (error && !invitation) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+        <Card padding="lg" className="max-w-md w-full text-center shadow-xl">
           <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -118,20 +121,19 @@ function InvitedSignupContent() {
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Invalid Invitation</h1>
           <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
-          <Link
-            href="/signin"
-            className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            Go to Login
+          <Link href="/signin">
+            <Button variant="primary" size="md">
+              Go to Login
+            </Button>
           </Link>
-        </div>
+        </Card>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 max-w-md w-full">
+      <Card padding="lg" className="max-w-md w-full shadow-xl">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -167,63 +169,51 @@ function InvitedSignupContent() {
             </div>
           )}
 
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Full Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              disabled={submitting}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              placeholder="John Doe"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Password <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-              minLength={8}
-              disabled={submitting}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              placeholder="At least 8 characters"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Confirm Password <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              required
-              minLength={8}
-              disabled={submitting}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              placeholder="Re-enter password"
-            />
-          </div>
-
-          <button
-            type="submit"
+          <Input
+            label="Full Name"
+            type="text"
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
             disabled={submitting}
-            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            placeholder="John Doe"
+          />
+
+          <Input
+            label="Password"
+            type="password"
+            id="password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            required
+            minLength={8}
+            disabled={submitting}
+            placeholder="At least 8 characters"
+          />
+
+          <Input
+            label="Confirm Password"
+            type="password"
+            id="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            required
+            minLength={8}
+            disabled={submitting}
+            placeholder="Re-enter password"
+          />
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            disabled={submitting}
+            isLoading={submitting}
+            className="w-full"
           >
             {submitting ? 'Creating Account...' : 'Create Account'}
-          </button>
+          </Button>
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
@@ -232,7 +222,7 @@ function InvitedSignupContent() {
             Sign in
           </Link>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

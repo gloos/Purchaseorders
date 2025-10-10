@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
 
 export default function SetupPage() {
   const router = useRouter()
@@ -48,7 +51,7 @@ export default function SetupPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
+      <Card padding="lg" className="max-w-md w-full shadow-xl">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
           Setup Your Organization
         </h1>
@@ -57,49 +60,40 @@ export default function SetupPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Organization Name *
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              placeholder="e.g., Acme Corporation"
-              className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-            />
-          </div>
+          <Input
+            label="Organization Name *"
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            placeholder="e.g., Acme Corporation"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Organization Slug *
-            </label>
-            <input
-              type="text"
-              name="slug"
-              value={formData.slug}
-              onChange={handleChange}
-              required
-              placeholder="e.g., acme-corporation"
-              pattern="[a-z0-9-]+"
-              className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-            />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Lowercase letters, numbers, and hyphens only
-            </p>
-          </div>
+          <Input
+            label="Organization Slug *"
+            type="text"
+            name="slug"
+            value={formData.slug}
+            onChange={handleChange}
+            required
+            placeholder="e.g., acme-corporation"
+            pattern="[a-z0-9-]+"
+            helperText="Lowercase letters, numbers, and hyphens only"
+          />
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="md"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+            isLoading={loading}
+            className="w-full"
           >
             {loading ? 'Creating...' : 'Create Organization'}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { getUser } from '@/lib/auth-helpers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
 
 export default async function Home() {
   const user = await getUser()
@@ -21,17 +22,15 @@ export default async function Home() {
             Streamline your purchase order management with FreeAgent integration
           </p>
           <div className="flex gap-4 justify-center">
-            <Link
-              href="/signin"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors"
-            >
-              Sign In
+            <Link href="/signin">
+              <Button variant="primary" size="md" className="px-8 py-3">
+                Sign In
+              </Button>
             </Link>
-            <Link
-              href="/signup"
-              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-medium py-3 px-8 rounded-lg border border-slate-300 dark:border-slate-600 transition-colors"
-            >
-              Sign Up
+            <Link href="/signup">
+              <Button variant="secondary" size="md" className="px-8 py-3">
+                Sign Up
+              </Button>
             </Link>
           </div>
         </div>
