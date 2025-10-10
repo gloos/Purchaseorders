@@ -295,7 +295,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <Input
-                  label="Company Name *"
+                  label="Company Name"
                   type="text"
                   name="name"
                   value={formData.name}

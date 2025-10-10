@@ -128,6 +128,26 @@ function SignInForm() {
           </Link>
         </p>
       </div>
+
+      <div className="mt-4 text-center">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          <Link
+            href="/terms"
+            target="_blank"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            Terms of Service
+          </Link>
+          {' '}·{' '}
+          <Link
+            href="/privacy"
+            target="_blank"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            Privacy Policy
+          </Link>
+        </p>
+      </div>
     </Card>
   )
 }
