@@ -20,15 +20,37 @@ export default function ResetPasswordForm() {
   const token = searchParams.get('token')
 
   useEffect(() => {
-    if (!token) {
-      setError('Invalid or missing reset token')
-      setValidating(false)
-      return
+    const validateToken = async () => {
+      if (!token) {
+        setError('Invalid or missing reset token')
+        setValidating(false)
+        return
+      }
+
+      try {
+        const response = await fetch('/api/auth/validate-reset-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        })
+
+        const data = await response.json()
+
+        if (data.valid) {
+          setTokenValid(true)
+        } else {
+          setError(data.error || 'Invalid reset link')
+          setTokenValid(false)
+        }
+      } catch (err) {
+        setError('Failed to validate reset link')
+        setTokenValid(false)
+      } finally {
+        setValidating(false)
+      }
     }
 
-    // Validate token exists (API will check expiry)
-    setValidating(false)
-    setTokenValid(true)
+    validateToken()
   }, [token])
 
   const validatePassword = (pass: string): string | null => {
@@ -93,9 +115,13 @@ export default function ResetPasswordForm() {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
             Invalid Reset Link
           </h2>
+          {error && (
+            <div className="mb-4 p-3 text-sm text-red-800 bg-red-100 dark:text-red-200 dark:bg-red-900/30 rounded">
+              {error}
+            </div>
+          )}
           <p className="text-slate-600 dark:text-slate-400 mb-6">
-            This password reset link is invalid or has expired.
-            Please request a new one.
+            Please request a new password reset link.
           </p>
           <Link href="/forgot-password">
             <Button variant="primary" size="md" className="w-full">
