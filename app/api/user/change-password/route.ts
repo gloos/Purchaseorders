@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/nextjs'
 export async function POST(request: Request) {
   try {
     const user = await getUser()
-    if (!user) {
+    if (!user || !user.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
