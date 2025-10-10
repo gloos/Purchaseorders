@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/Input'
 import Link from 'next/link'
 
 export default function UserProfilePage() {
-  const { user, loading: userLoading } = useUser()
+  const { loading: userLoading } = useUser()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -17,6 +17,7 @@ export default function UserProfilePage() {
 
   // Profile form
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState('')
@@ -24,10 +25,23 @@ export default function UserProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('')
 
   useEffect(() => {
-    if (!userLoading && user) {
-      setName(user.name || '')
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('/api/user/profile')
+        if (response.ok) {
+          const data = await response.json()
+          setName(data.name || '')
+          setEmail(data.email || '')
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile:', err)
+      }
     }
-  }, [user, userLoading])
+
+    if (!userLoading) {
+      fetchProfile()
+    }
+  }, [userLoading])
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -167,7 +181,7 @@ export default function UserProfilePage() {
               <Input
                 label="Email Address"
                 type="email"
-                value={user?.email || ''}
+                value={email}
                 disabled
                 helperText="Email cannot be changed"
               />
