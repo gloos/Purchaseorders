@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
 import { UserRole } from '@prisma/client'
+import { Card } from '@/components/ui/Card'
+import { Select } from '@/components/ui/Select'
 
 interface User {
   id: string
@@ -150,11 +152,11 @@ export default function UsersPage() {
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
           </div>
         ) : users.length === 0 ? (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-12 text-center">
+          <Card padding="lg" className="text-center">
             <p className="text-slate-600 dark:text-slate-400">No users found</p>
-          </div>
+          </Card>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <Card padding="sm" className="overflow-hidden">
             <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
               <thead className="bg-slate-50 dark:bg-slate-900">
                 <tr>
@@ -189,30 +191,33 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
-                        disabled={updating === user.id}
-                        className="border border-slate-300 dark:border-slate-600 rounded px-3 py-1 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <option value="SUPER_ADMIN">Super Admin</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="MANAGER">Manager</option>
-                        <option value="VIEWER">Viewer</option>
-                      </select>
-                      {updating === user.id && (
-                        <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">Updating...</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                          disabled={updating === user.id}
+                          className="text-sm min-w-[140px]"
+                          options={[
+                            { value: 'SUPER_ADMIN', label: 'Super Admin' },
+                            { value: 'ADMIN', label: 'Admin' },
+                            { value: 'MANAGER', label: 'Manager' },
+                            { value: 'VIEWER', label: 'Viewer' }
+                          ]}
+                        />
+                        {updating === user.id && (
+                          <span className="text-sm text-slate-500 dark:text-slate-400">Updating...</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         )}
 
         {/* Role Descriptions */}
-        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg" className="mt-8">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Role Permissions</h2>
           <div className="space-y-4">
             {shouldShowRoleDescription('SUPER_ADMIN') && (
@@ -248,7 +253,7 @@ export default function UsersPage() {
               </div>
             )}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )
