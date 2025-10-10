@@ -83,25 +83,40 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Fetch contacts from FreeAgent with a limit to prevent timeouts
+    // Fetch ALL contacts from FreeAgent (no limit)
     const client = new FreeAgentClient(accessToken)
-    const CONTACTS_LIMIT = 200 // Limit to 200 contacts per sync to stay within time limits
-    const freeAgentContacts = await client.getContacts(CONTACTS_LIMIT)
+    const freeAgentContacts = await client.getContacts()
 
-    // Get all existing contact IDs in one query
+    // Get all existing contacts with their sync timestamps
     const existingContacts = await prisma.contact.findMany({
       where: { organizationId: org.id },
-      select: { freeAgentId: true }
+      select: { freeAgentId: true, syncedAt: true }
     })
-    const existingIds = new Set(existingContacts.map(c => c.freeAgentId))
+
+    // Create a map for quick lookups: freeAgentId -> syncedAt
+    const existingContactsMap = new Map(
+      existingContacts.map(c => [c.freeAgentId, c.syncedAt])
+    )
+
+    // Only sync contacts that are new OR haven't been synced in the last hour
+    const ONE_HOUR_AGO = new Date(Date.now() - 60 * 60 * 1000)
 
     // Prepare bulk data
     const contactsToCreate: any[] = []
     const contactsToUpdate: any[] = []
+    let skipped = 0
 
     for (const faContact of freeAgentContacts) {
       // Extract FreeAgent ID from URL
       const freeAgentId = faContact.url.split('/').pop()!
+
+      const lastSyncedAt = existingContactsMap.get(freeAgentId)
+
+      // Skip if contact was synced recently (within last hour)
+      if (lastSyncedAt && lastSyncedAt > ONE_HOUR_AGO) {
+        skipped++
+        continue
+      }
 
       // Build contact name
       let name = faContact.organisation_name || ''
@@ -135,7 +150,7 @@ export async function POST(request: NextRequest) {
         organizationId: org.id
       }
 
-      if (existingIds.has(freeAgentId)) {
+      if (existingContactsMap.has(freeAgentId)) {
         contactsToUpdate.push(contactData)
       } else {
         contactsToCreate.push(contactData)
@@ -185,23 +200,15 @@ export async function POST(request: NextRequest) {
     const headers = new Headers()
     addRateLimitHeaders(headers, rateLimitResult)
 
-    // Check if there are more contacts to sync
-    const totalContactsInOrg = await prisma.contact.count({
-      where: { organizationId: org.id }
-    })
-
-    const hasMore = freeAgentContacts.length >= CONTACTS_LIMIT
-
     return NextResponse.json({
       success: true,
       total: freeAgentContacts.length,
       created,
       updated,
-      totalInDatabase: totalContactsInOrg,
-      hasMore,
-      message: hasMore
-        ? `Synced ${freeAgentContacts.length} contacts. Run sync again to continue.`
-        : undefined
+      skipped,
+      message: skipped > 0
+        ? `Synced successfully! Created: ${created}, Updated: ${updated}, Skipped: ${skipped} (recently synced).`
+        : `Synced successfully! Created: ${created}, Updated: ${updated}.`
     }, { headers })
   } catch (error) {
     console.error('Error syncing contacts:', error)

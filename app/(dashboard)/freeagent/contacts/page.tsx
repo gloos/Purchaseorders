@@ -84,11 +84,8 @@ function FreeAgentContactsContent() {
 
       const data = await response.json()
 
-      if (data.hasMore) {
-        setMessage(`Synced ${data.total} contacts (Created: ${data.created}, Updated: ${data.updated}). Click sync again to continue with remaining contacts.`)
-      } else {
-        setMessage(`Successfully synced! Created: ${data.created}, Updated: ${data.updated}, Total: ${data.total}. All contacts are now synced.`)
-      }
+      // Display the message from the API
+      setMessage(data.message || 'Successfully synced contacts!')
 
       // Fetch contacts again to show the new data
       fetchContacts()
