@@ -84,6 +84,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </svg>
       ),
       show: true,
+      special: false,
     },
     {
       name: 'Purchase Orders',
@@ -94,6 +95,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </svg>
       ),
       show: true,
+      special: false,
     },
     {
       name: 'Contacts',
@@ -104,6 +106,18 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </svg>
       ),
       show: true,
+      special: false,
+    },
+    {
+      name: 'Feedback',
+      path: '/feedback',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+        </svg>
+      ),
+      show: true,
+      special: true,
     },
     {
       name: 'Profile',
@@ -114,6 +128,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </svg>
       ),
       show: !userLoading && role !== 'VIEWER',
+      special: false,
     },
     {
       name: 'Settings',
@@ -125,6 +140,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </svg>
       ),
       show: !userLoading && (hasPermission('canManageUsers') || hasPermission('canManageOrganization')),
+      special: false,
     },
   ]
 
@@ -187,7 +203,11 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                   href={item.path}
                   className={cn(
                     'flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200',
-                    isActive(item.path)
+                    item.special
+                      ? isActive(item.path)
+                        ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-medium'
+                        : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 font-medium'
+                      : isActive(item.path)
                       ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                   )}
