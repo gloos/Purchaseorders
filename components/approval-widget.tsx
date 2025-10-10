@@ -24,7 +24,11 @@ interface ApprovalRequest {
   }
 }
 
-export function ApprovalWidget() {
+interface ApprovalWidgetProps {
+  onApprovalChange?: () => void
+}
+
+export function ApprovalWidget({ onApprovalChange }: ApprovalWidgetProps) {
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [denyModalOpen, setDenyModalOpen] = useState(false)
@@ -65,6 +69,10 @@ export function ApprovalWidget() {
       if (response.ok) {
         // Refresh the list
         await fetchPendingApprovals()
+        // Trigger dashboard refresh
+        if (onApprovalChange) {
+          onApprovalChange()
+        }
         alert('Purchase order approved successfully')
       } else {
         const error = await response.json()
@@ -100,6 +108,10 @@ export function ApprovalWidget() {
         setSelectedApproval(null)
         // Refresh the list
         await fetchPendingApprovals()
+        // Trigger dashboard refresh
+        if (onApprovalChange) {
+          onApprovalChange()
+        }
         alert('Purchase order denied')
       } else {
         const error = await response.json()

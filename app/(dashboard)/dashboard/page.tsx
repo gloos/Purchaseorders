@@ -357,7 +357,7 @@ export default function DashboardPage() {
       {/* Approval Widget - Dynamically loaded client-side only */}
       {!userRoleLoading && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
         <div className="mb-8">
-          <ApprovalWidget />
+          <ApprovalWidget onApprovalChange={fetchAnalytics} />
         </div>
       )}
 
