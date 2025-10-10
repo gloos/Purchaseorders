@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 
@@ -81,9 +80,8 @@ function FreeAgentContactsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Navbar />
-      <div className="p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
         <Link href="/dashboard" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
           ← Back to Dashboard
@@ -187,13 +185,8 @@ function FreeAgentContactsContent() {
 export default function FreeAgentContactsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Navbar />
-        <div className="p-8">
-          <div className="text-center py-12">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          </div>
-        </div>
+      <div className="flex items-center justify-center h-full py-12">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
       </div>
     }>
       <FreeAgentContactsContent />

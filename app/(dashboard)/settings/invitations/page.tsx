@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
 import { UserRole, InvitationStatus } from '@prisma/client'
 import Link from 'next/link'
@@ -102,16 +101,15 @@ export default function InvitationsPage() {
 
   if (userLoading || !hasPermission('canManageUsers')) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center h-full py-12">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Navbar />
-      <div className="p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">User Invitations</h1>
