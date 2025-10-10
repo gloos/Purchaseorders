@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
 import Image from 'next/image'
 
 interface CompanyProfile {
@@ -220,13 +223,16 @@ export default function ProfilePage() {
 
         {/* Sync Button */}
         <div className="mb-6 flex justify-end">
-          <button
+          <Button
             onClick={handleSyncFromFreeAgent}
             disabled={syncing}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+            isLoading={syncing}
+            variant="primary"
+            size="md"
+            className="bg-purple-600 hover:bg-purple-700"
           >
             {syncing ? 'Syncing...' : 'Sync from FreeAgent'}
-          </button>
+          </Button>
         </div>
 
         {profile?.companySyncedAt && (
@@ -237,7 +243,7 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Company Logo */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <Card padding="lg">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Company Logo</h2>
             <div className="space-y-4">
               {formData.logoUrl && (
@@ -278,201 +284,144 @@ export default function ProfilePage() {
               </div>
 
               {/* URL Input */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Logo URL
-                </label>
-                <input
-                  type="url"
-                  name="logoUrl"
-                  value={formData.logoUrl}
-                  onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                  placeholder="https://example.com/logo.png"
-                />
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Or enter a URL to your company logo image
-                </p>
-              </div>
+              <Input
+                label="Logo URL"
+                type="url"
+                name="logoUrl"
+                value={formData.logoUrl}
+                onChange={handleChange}
+                placeholder="https://example.com/logo.png"
+                helperText="Or enter a URL to your company logo image"
+              />
             </div>
-          </div>
+          </Card>
 
           {/* Basic Information */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <Card padding="lg">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Company Name *
-                </label>
-                <input
+                <Input
+                  label="Company Name *"
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Company Registration Number
-                </label>
-                <input
-                  type="text"
-                  name="companyRegistrationNumber"
-                  value={formData.companyRegistrationNumber}
-                  onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  VAT Number
-                </label>
-                <input
-                  type="text"
-                  name="vatNumber"
-                  value={formData.vatNumber}
-                  onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
+              <Input
+                label="Company Registration Number"
+                type="text"
+                name="companyRegistrationNumber"
+                value={formData.companyRegistrationNumber}
+                onChange={handleChange}
+              />
+              <Input
+                label="VAT Number"
+                type="text"
+                name="vatNumber"
+                value={formData.vatNumber}
+                onChange={handleChange}
+              />
             </div>
-          </div>
+          </Card>
 
           {/* Address */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <Card padding="lg">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Address</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Address Line 1
-                </label>
-                <input
+                <Input
+                  label="Address Line 1"
                   type="text"
                   name="addressLine1"
                   value={formData.addressLine1}
                   onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Address Line 2
-                </label>
-                <input
+                <Input
+                  label="Address Line 2"
                   type="text"
                   name="addressLine2"
                   value={formData.addressLine2}
                   onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  City
-                </label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Region/County
-                </label>
-                <input
-                  type="text"
-                  name="region"
-                  value={formData.region}
-                  onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Postcode
-                </label>
-                <input
-                  type="text"
-                  name="postcode"
-                  value={formData.postcode}
-                  onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Country
-                </label>
-                <input
-                  type="text"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
+              <Input
+                label="City"
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+              />
+              <Input
+                label="Region/County"
+                type="text"
+                name="region"
+                value={formData.region}
+                onChange={handleChange}
+              />
+              <Input
+                label="Postcode"
+                type="text"
+                name="postcode"
+                value={formData.postcode}
+                onChange={handleChange}
+              />
+              <Input
+                label="Country"
+                type="text"
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+              />
             </div>
-          </div>
+          </Card>
 
           {/* Contact Information */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <Card padding="lg">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Contact Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
+              <Input
+                label="Phone"
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+              <Input
+                label="Email"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+              />
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Website
-                </label>
-                <input
+                <Input
+                  label="Website"
                   type="url"
                   name="website"
                   value={formData.website}
                   onChange={handleChange}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   placeholder="https://www.example.com"
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Actions */}
           <div className="flex gap-4">
-            <button
+            <Button
               type="submit"
+              variant="primary"
+              size="md"
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50"
+              isLoading={saving}
             >
               {saving ? 'Saving...' : 'Save Changes'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

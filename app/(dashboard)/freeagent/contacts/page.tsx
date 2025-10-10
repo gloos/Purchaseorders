@@ -4,6 +4,8 @@ import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 
 interface Contact {
   id: string
@@ -91,13 +93,15 @@ function FreeAgentContactsContent() {
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">FreeAgent Contacts</h1>
             <p className="text-slate-600 dark:text-slate-400 mt-1">Manage contacts synced from FreeAgent</p>
           </div>
-          <button
+          <Button
             onClick={handleSync}
             disabled={syncing}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+            isLoading={syncing}
+            variant="primary"
+            size="md"
           >
             {syncing ? 'Syncing...' : 'Sync from FreeAgent'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -116,15 +120,15 @@ function FreeAgentContactsContent() {
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
         </div>
       ) : contacts.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-12 text-center">
+        <Card padding="lg" className="text-center">
           <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">No contacts yet</h3>
           <p className="mt-2 text-slate-600 dark:text-slate-400">Click "Sync from FreeAgent" to import your contacts</p>
-        </div>
+        </Card>
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <Card padding="sm" className="overflow-hidden">
           <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
             <thead className="bg-slate-50 dark:bg-slate-900">
               <tr>
@@ -173,7 +177,7 @@ function FreeAgentContactsContent() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
       </div>
     </div>
