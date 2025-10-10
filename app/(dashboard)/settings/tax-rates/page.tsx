@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
 import { TaxType } from '@prisma/client'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input, Textarea } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 
 interface TaxRate {
   id: string
@@ -251,12 +255,13 @@ export default function TaxRatesPage() {
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Tax Rates</h1>
             <p className="text-slate-600 dark:text-slate-400 mt-1">Configure tax rates for purchase orders</p>
           </div>
-          <button
+          <Button
             onClick={() => setShowForm(!showForm)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            variant={showForm ? 'secondary' : 'primary'}
+            size="md"
           >
             {showForm ? 'Cancel' : 'Add Tax Rate'}
-          </button>
+          </Button>
         </div>
 
         {/* Message Display */}
@@ -272,80 +277,65 @@ export default function TaxRatesPage() {
 
         {/* Create/Edit Form */}
         {showForm && (
-          <div className="mb-6 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+          <Card padding="lg" className="mb-6">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
               {editingId ? 'Edit Tax Rate' : 'Add New Tax Rate'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Name *
-                  </label>
-                  <input
+                  <Input
+                    label="Name"
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                     required
                     placeholder="e.g., UK VAT Standard Rate"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Tax Type *
-                  </label>
-                  <select
+                  <Select
+                    label="Tax Type"
                     value={formData.taxType}
                     onChange={(e) => setFormData({ ...formData, taxType: e.target.value as TaxType })}
-                    className="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                  >
-                    {Object.entries(taxTypeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
+                    options={Object.entries(taxTypeLabels).map(([value, label]) => ({
+                      value,
+                      label
+                    }))}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Rate (%) *
-                  </label>
-                  <input
+                  <Input
+                    label="Rate (%)"
                     type="number"
                     step="0.01"
                     min="0"
                     max="100"
                     value={formData.rate}
                     onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
-                    className="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                     required
                     placeholder="e.g., 20.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Region
-                  </label>
-                  <input
+                  <Input
+                    label="Region"
                     type="text"
                     value={formData.region}
                     onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                    className="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                     placeholder="e.g., California, London"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Description
-                </label>
-                <textarea
+                <Textarea
+                  label="Description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                   rows={2}
                   placeholder="Optional description"
                 />
@@ -374,22 +364,24 @@ export default function TaxRatesPage() {
               </div>
 
               <div className="flex gap-3">
-                <button
+                <Button
                   type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  variant="primary"
+                  size="md"
                 >
                   {editingId ? 'Update' : 'Create'} Tax Rate
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={resetForm}
-                  className="bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                  variant="secondary"
+                  size="md"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
         )}
 
         {/* Tax Rates List */}
@@ -398,12 +390,12 @@ export default function TaxRatesPage() {
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
           </div>
         ) : taxRates.length === 0 ? (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-12 text-center">
+          <Card padding="lg" className="text-center">
             <p className="text-slate-600 dark:text-slate-400">No tax rates configured</p>
             <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">Create your first tax rate to get started</p>
-          </div>
+          </Card>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <Card padding="sm" className="overflow-hidden">
             <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
               <thead className="bg-slate-50 dark:bg-slate-900">
                 <tr>
@@ -465,47 +457,55 @@ export default function TaxRatesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           onClick={() => handleEdit(taxRate)}
                           disabled={updating === taxRate.id}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 disabled:opacity-50"
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                         >
                           Edit
-                        </button>
+                        </Button>
                         {!taxRate.isDefault && (
-                          <button
+                          <Button
                             onClick={() => handleSetDefault(taxRate.id)}
                             disabled={updating === taxRate.id}
-                            className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 disabled:opacity-50"
+                            variant="ghost"
+                            size="sm"
+                            className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300"
                           >
                             Set Default
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <Button
                           onClick={() => handleToggleActive(taxRate.id, taxRate.isActive)}
                           disabled={updating === taxRate.id}
-                          className="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 disabled:opacity-50"
+                          variant="ghost"
+                          size="sm"
+                          className="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300"
                         >
                           {taxRate.isActive ? 'Deactivate' : 'Activate'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           onClick={() => handleDelete(taxRate.id)}
                           disabled={updating === taxRate.id}
-                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 disabled:opacity-50"
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                         >
                           Delete
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         )}
 
         {/* Tax Type Descriptions */}
-        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+        <Card padding="lg" className="mt-8">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Tax Types</h2>
           <div className="space-y-3">
             {Object.entries(taxTypeDescriptions).map(([type, description]) => (
@@ -519,7 +519,7 @@ export default function TaxRatesPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )
