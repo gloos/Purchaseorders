@@ -7,6 +7,8 @@ import { useUser } from '@/lib/hooks/use-user'
 import { UserRole, InvitationStatus } from '@prisma/client'
 import Link from 'next/link'
 import { InviteUserModal } from '@/components/invite-user-modal'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 
 interface Invitation {
   id: string
@@ -113,12 +115,13 @@ export default function InvitationsPage() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">User Invitations</h1>
-            <button
+            <Button
               onClick={() => setShowInviteModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              variant="primary"
+              size="md"
             >
               + Invite User
-            </button>
+            </Button>
           </div>
           <p className="text-slate-600 dark:text-slate-400">Manage pending and completed user invitations</p>
         </div>
@@ -138,17 +141,18 @@ export default function InvitationsPage() {
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
           </div>
         ) : invitations.length === 0 ? (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-12 text-center">
+          <Card padding="lg" className="text-center">
             <p className="text-slate-600 dark:text-slate-400 mb-4">No invitations found</p>
-            <button
+            <Button
               onClick={() => setShowInviteModal(true)}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              variant="ghost"
+              size="sm"
             >
               Invite your first user
-            </button>
-          </div>
+            </Button>
+          </Card>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <Card padding="sm" className="overflow-hidden">
             <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
               <thead className="bg-slate-50 dark:bg-slate-900">
                 <tr>
@@ -194,19 +198,21 @@ export default function InvitationsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {invitation.status === 'PENDING' && (
-                        <button
+                        <Button
                           onClick={() => handleCancelInvitation(invitation.id)}
-                          className="text-red-600 hover:text-red-700 font-medium"
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
                         >
                           Cancel
-                        </button>
+                        </Button>
                       )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         )}
 
         <div className="mt-6">

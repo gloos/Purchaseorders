@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
 import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
 
 interface ApprovalSettings {
   approvalThreshold: number
@@ -133,14 +136,12 @@ export default function ApprovalSettingsPage() {
         )}
 
         {/* Settings Form */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 max-w-2xl">
+        <Card padding="lg" className="max-w-2xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Approval Threshold */}
             <div>
-              <label htmlFor="approvalThreshold" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Approval Threshold (£)
-              </label>
-              <input
+              <Input
+                label="Approval Threshold (£)"
                 type="number"
                 id="approvalThreshold"
                 min="0"
@@ -148,13 +149,9 @@ export default function ApprovalSettingsPage() {
                 step="0.01"
                 value={formData.approvalThreshold}
                 onChange={(e) => setFormData({ ...formData, approvalThreshold: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                helperText="Purchase orders with a subtotal (before tax) equal to or above this amount require approval from an admin. Managers who create POs at or above this threshold must submit them for approval."
               />
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                Purchase orders with a subtotal (before tax) equal to or above this amount require approval from an admin.
-                Managers who create POs at or above this threshold must submit them for approval.
-              </p>
             </div>
 
             {/* Auto-approve Admin POs */}
@@ -206,16 +203,18 @@ export default function ApprovalSettingsPage() {
 
             {/* Save Button */}
             <div className="flex justify-end">
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                size="md"
                 disabled={saving}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors"
+                isLoading={saving}
               >
                 {saving ? 'Saving...' : 'Save Settings'}
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
+        </Card>
       </div>
     </div>
   )
