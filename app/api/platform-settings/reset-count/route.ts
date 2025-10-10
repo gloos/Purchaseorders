@@ -15,7 +15,7 @@ import { resetOrgCount } from '@/lib/platform-settings'
  * POST /api/platform-settings/reset-count
  * Reset the organization count to match actual database count
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const supabase = await createClient()
     const user = await getUserWithRole(supabase)
