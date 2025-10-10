@@ -173,11 +173,7 @@ export async function POST(request: NextRequest) {
                 syncedAt: contact.syncedAt
               }
             })
-          ),
-          {
-            maxWait: 5000, // Maximum time to wait for a transaction slot
-            timeout: 10000, // Maximum time a transaction can run
-          }
+          )
         )
 
         updated += batch.length
