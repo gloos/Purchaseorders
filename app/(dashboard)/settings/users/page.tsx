@@ -193,14 +193,23 @@ export default function UsersPage() {
                         <Select
                           value={user.role}
                           onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
-                          disabled={updating === user.id}
+                          disabled={updating === user.id || (user.role === 'SUPER_ADMIN' && userRole !== 'SUPER_ADMIN')}
                           className="text-sm min-w-[140px]"
-                          options={[
-                            { value: 'SUPER_ADMIN', label: 'Super Admin' },
-                            { value: 'ADMIN', label: 'Admin' },
-                            { value: 'MANAGER', label: 'Manager' },
-                            { value: 'VIEWER', label: 'Viewer' }
-                          ]}
+                          options={
+                            // Only SUPER_ADMIN can see and assign SUPER_ADMIN role
+                            userRole === 'SUPER_ADMIN'
+                              ? [
+                                  { value: 'SUPER_ADMIN', label: 'Super Admin' },
+                                  { value: 'ADMIN', label: 'Admin' },
+                                  { value: 'MANAGER', label: 'Manager' },
+                                  { value: 'VIEWER', label: 'Viewer' }
+                                ]
+                              : [
+                                  { value: 'ADMIN', label: 'Admin' },
+                                  { value: 'MANAGER', label: 'Manager' },
+                                  { value: 'VIEWER', label: 'Viewer' }
+                                ]
+                          }
                         />
                         {updating === user.id && (
                           <span className="text-sm text-slate-500 dark:text-slate-400">Updating...</span>

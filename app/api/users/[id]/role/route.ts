@@ -26,6 +26,14 @@ export async function PATCH(
       )
     }
 
+    // Only SUPER_ADMIN can assign SUPER_ADMIN role
+    if (role === 'SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return NextResponse.json(
+        { error: 'Only Super Admins can assign the Super Admin role' },
+        { status: 403 }
+      )
+    }
+
     // Verify the target user belongs to the same organization
     const targetUser = await prisma.user.findFirst({
       where: {
@@ -36,6 +44,14 @@ export async function PATCH(
 
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Only SUPER_ADMIN can modify another SUPER_ADMIN's role
+    if (targetUser.role === 'SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return NextResponse.json(
+        { error: 'Only Super Admins can modify Super Admin roles' },
+        { status: 403 }
+      )
     }
 
     // Prevent user from changing their own role
