@@ -4,6 +4,9 @@ import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
 
 // Force dynamic rendering to avoid build-time environment variable issues
 export const dynamic = 'force-dynamic'
@@ -50,7 +53,7 @@ function SignInForm() {
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-8">
+    <Card padding="lg" className="shadow-xl">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
           Welcome Back
@@ -74,48 +77,39 @@ function SignInForm() {
         )}
 
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-          >
-            Email
-          </label>
-          <input
+          <Input
+            label="Email"
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
             placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-          >
-            Password
-          </label>
-          <input
+          <Input
+            label="Password"
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
             placeholder="••••••••"
           />
         </div>
 
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          size="md"
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          isLoading={loading}
+          className="w-full"
         >
           {loading ? 'Signing in...' : 'Sign In'}
-        </button>
+        </Button>
       </form>
 
       <div className="mt-6 text-center">
@@ -129,18 +123,18 @@ function SignInForm() {
           </Link>
         </p>
       </div>
-    </div>
+    </Card>
   )
 }
 
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-8">
+      <Card padding="lg" className="shadow-xl">
         <div className="text-center">
           <p className="text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
-      </div>
+      </Card>
     }>
       <SignInForm />
     </Suspense>

@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
 
 // Force dynamic rendering to avoid build-time environment variable issues
 export const dynamic = 'force-dynamic'
@@ -100,7 +103,7 @@ export default function SignUpPage() {
   if (step === 'account') {
 
     return (
-      <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-8">
+      <Card padding="lg" className="shadow-xl">
         {/* Progress indicator */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center">
@@ -130,57 +133,35 @@ export default function SignUpPage() {
           </div>
         )}
 
-        <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-          >
-            Full Name
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
-            placeholder="John Doe"
-          />
-        </div>
+        <Input
+          label="Full Name"
+          id="name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          placeholder="John Doe"
+        />
+
+        <Input
+          label="Email"
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          placeholder="you@example.com"
+        />
 
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
-            placeholder="you@example.com"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-          >
-            Password
-          </label>
-          <input
+          <Input
+            label="Password"
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
             placeholder="••••••••"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -188,13 +169,16 @@ export default function SignUpPage() {
           </p>
         </div>
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="md"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            isLoading={loading}
+            className="w-full"
           >
             {loading ? 'Creating account...' : 'Continue'}
-          </button>
+          </Button>
         </form>
 
         <div className="mt-6 text-center">
@@ -208,14 +192,14 @@ export default function SignUpPage() {
             </Link>
           </p>
         </div>
-      </div>
+      </Card>
     )
   }
 
   // Step 2: Organization Creation
   if (step === 'organization') {
     return (
-      <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-8">
+      <Card padding="lg" className="shadow-xl">
         {/* Progress indicator */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center">
@@ -246,26 +230,18 @@ export default function SignUpPage() {
           )}
 
           <div>
-            <label
-              htmlFor="orgName"
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-            >
-              Organization Name
-            </label>
-            <input
+            <Input
+              label="Organization Name"
               id="orgName"
               type="text"
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
               required
               minLength={3}
-              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
               placeholder="Acme Corporation"
               autoFocus
+              helperText="This will be displayed in the navigation bar"
             />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              This will be displayed in the navigation bar
-            </p>
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -291,15 +267,18 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="md"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            isLoading={loading}
+            className="w-full"
           >
             {loading ? 'Setting up organization...' : 'Complete Setup'}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     )
   }
 
