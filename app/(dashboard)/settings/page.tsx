@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { useUser } from '@/lib/hooks/use-user'
 import Link from 'next/link'
+import { Card } from '@/components/ui/Card'
 
 export default function SettingsPage() {
   const { hasPermission, loading: userLoading } = useUser()
@@ -36,10 +37,8 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* User Management */}
           {hasPermission('canManageUsers') && (
-            <Link
-              href="/settings/users"
-              className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
-            >
+            <Link href="/settings/users">
+            <Card padding="lg" className="hover:border-blue-500 dark:hover:border-blue-500 transition-colors cursor-pointer">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   <svg className="h-8 w-8 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -53,15 +52,14 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
+            </Card>
             </Link>
           )}
 
           {/* User Invitations */}
           {hasPermission('canManageUsers') && (
-            <Link
-              href="/settings/invitations"
-              className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
-            >
+            <Link href="/settings/invitations">
+            <Card padding="lg" className="hover:border-blue-500 dark:hover:border-blue-500 transition-colors cursor-pointer">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   <svg className="h-8 w-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,15 +73,14 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
+            </Card>
             </Link>
           )}
 
           {/* Tax Rates */}
           {hasPermission('canManageOrganization') && (
-            <Link
-              href="/settings/tax-rates"
-              className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
-            >
+            <Link href="/settings/tax-rates">
+            <Card padding="lg" className="hover:border-blue-500 dark:hover:border-blue-500 transition-colors cursor-pointer">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   <svg className="h-8 w-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,15 +94,14 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
+            </Card>
             </Link>
           )}
 
           {/* Approval Settings */}
           {hasPermission('canManageOrganization') && (
-            <Link
-              href="/settings/approvals"
-              className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
-            >
+            <Link href="/settings/approvals">
+            <Card padding="lg" className="hover:border-blue-500 dark:hover:border-blue-500 transition-colors cursor-pointer">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   <svg className="h-8 w-8 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,6 +115,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
+            </Card>
             </Link>
           )}
         </div>
