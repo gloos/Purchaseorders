@@ -170,7 +170,7 @@ export class FreeAgentClient {
   }
 
   // Get all contacts (handles pagination)
-  async getContacts(): Promise<FreeAgentContact[]> {
+  async getContacts(limit?: number): Promise<FreeAgentContact[]> {
     const allContacts: FreeAgentContact[] = []
     let page = 1
     let hasMore = true
@@ -182,6 +182,11 @@ export class FreeAgentClient {
       if (contacts.length > 0) {
         allContacts.push(...contacts)
         page++
+
+        // Check if we've hit the limit
+        if (limit && allContacts.length >= limit) {
+          return allContacts.slice(0, limit)
+        }
 
         // If we got fewer than 100, we're on the last page
         if (contacts.length < 100) {

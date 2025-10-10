@@ -4,8 +4,8 @@ import { FreeAgentClient } from '@/lib/freeagent/client'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getIdentifier, addRateLimitHeaders } from '@/lib/rate-limit'
 
-// Extend timeout for long-running sync operations
-export const maxDuration = 60 // 60 seconds (requires Vercel Pro plan, defaults to 10s on Hobby)
+// Keep timeout reasonable to avoid connection pool issues
+export const maxDuration = 30 // 30 seconds
 
 // POST /api/freeagent/sync-contacts - Sync contacts from FreeAgent
 export async function POST(request: NextRequest) {
@@ -83,9 +83,10 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Fetch contacts from FreeAgent
+    // Fetch contacts from FreeAgent with a limit to prevent timeouts
     const client = new FreeAgentClient(accessToken)
-    const freeAgentContacts = await client.getContacts()
+    const CONTACTS_LIMIT = 200 // Limit to 200 contacts per sync to stay within time limits
+    const freeAgentContacts = await client.getContacts(CONTACTS_LIMIT)
 
     // Get all existing contact IDs in one query
     const existingContacts = await prisma.contact.findMany({
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest) {
     // Bulk update existing contacts in smaller batches to avoid transaction timeouts
     let updated = 0
     if (contactsToUpdate.length > 0) {
-      const batchSize = 50 // Process 50 updates at a time
+      const batchSize = 25 // Process 25 updates at a time for faster completion
 
       for (let i = 0; i < contactsToUpdate.length; i += batchSize) {
         const batch = contactsToUpdate.slice(i, i + batchSize)
@@ -172,7 +173,11 @@ export async function POST(request: NextRequest) {
                 syncedAt: contact.syncedAt
               }
             })
-          )
+          ),
+          {
+            maxWait: 5000, // Maximum time to wait for a transaction slot
+            timeout: 10000, // Maximum time a transaction can run
+          }
         )
 
         updated += batch.length
@@ -183,11 +188,23 @@ export async function POST(request: NextRequest) {
     const headers = new Headers()
     addRateLimitHeaders(headers, rateLimitResult)
 
+    // Check if there are more contacts to sync
+    const totalContactsInOrg = await prisma.contact.count({
+      where: { organizationId: org.id }
+    })
+
+    const hasMore = freeAgentContacts.length >= CONTACTS_LIMIT
+
     return NextResponse.json({
       success: true,
       total: freeAgentContacts.length,
       created,
-      updated
+      updated,
+      totalInDatabase: totalContactsInOrg,
+      hasMore,
+      message: hasMore
+        ? `Synced ${freeAgentContacts.length} contacts. Run sync again to continue.`
+        : undefined
     }, { headers })
   } catch (error) {
     console.error('Error syncing contacts:', error)
