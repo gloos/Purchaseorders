@@ -149,18 +149,47 @@ po-tool/
 
 ### Code Patterns
 
-1. **API Routes**: Use standardized response patterns
+1. **TypeScript Strict Mode**: Project enforces strict unused variable checking
+```typescript
+// ❌ BAD: Unused variables cause build failures
+export async function GET(request: Request) {
+  const router = useRouter() // Error: 'router' is declared but never read
+  const response = await fetch('/api') // Error: 'response' is declared but never read
+}
+
+// ✅ GOOD: Remove unused variables
+export async function GET(_request: Request) { // Prefix with _ if required by signature
+  await fetch('/api') // Don't assign if not needed
+}
+
+// ❌ BAD: Optional properties without null checks
+const email = user.email // Error: Type 'string | undefined' not assignable to 'string'
+
+// ✅ GOOD: Add null checks for optional properties
+if (!user || !user.email) {
+  return error
+}
+const email = user.email // Now TypeScript knows it's defined
+```
+
+**Common Patterns:**
+- Remove unused imports: `import { useRouter } from 'next/navigation'` → delete if unused
+- Prefix required-but-unused params: `function GET(_request: Request)`
+- Check optional properties: `if (!user || !user.email)` before using
+- Don't assign if not reading: `await fetch()` not `const res = await fetch()`
+
+2. **API Routes**: Use standardized response patterns
 ```typescript
 // Success: return NextResponse.json({ data })
 // Error: return NextResponse.json({ error: message }, { status })
 ```
 
-2. **Database Operations**: Always scope to organization
+3. **Database Operations**: Always scope to organization
 ```typescript
 where: { organizationId, id: resourceId }
 ```
 
-3. **Error Handling**: Use try-catch with Sentry logging
+4. **Error Handling**: Use try-catch with Sentry logging
 ```typescript
 try {
   // operation
@@ -273,11 +302,13 @@ When working with this codebase:
 
 ### Common Pitfalls to Avoid
 
+- **Don't leave unused variables** - TypeScript strict mode will fail the build. Remove or prefix with underscore
 - Don't use Prisma prepared statements (breaks with PgBouncer)
 - Don't assume environment variables exist at build time
 - Don't modify tax rates on existing POs
 - Don't expose internal IDs in public endpoints
 - Don't skip organization scoping in queries
+- **Don't use optional properties without null checks** - Check `if (!obj || !obj.prop)` before using
 
 ### Testing Checklist
 
