@@ -4,6 +4,9 @@ import { FreeAgentClient } from '@/lib/freeagent/client'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getIdentifier, addRateLimitHeaders } from '@/lib/rate-limit'
 
+// Extend timeout for long-running sync operations
+export const maxDuration = 60 // 60 seconds (requires Vercel Pro plan, defaults to 10s on Hobby)
+
 // POST /api/freeagent/sync-contacts - Sync contacts from FreeAgent
 export async function POST(request: NextRequest) {
   try {
@@ -84,10 +87,17 @@ export async function POST(request: NextRequest) {
     const client = new FreeAgentClient(accessToken)
     const freeAgentContacts = await client.getContacts()
 
-    let created = 0
-    let updated = 0
+    // Get all existing contact IDs in one query
+    const existingContacts = await prisma.contact.findMany({
+      where: { organizationId: org.id },
+      select: { freeAgentId: true }
+    })
+    const existingIds = new Set(existingContacts.map(c => c.freeAgentId))
 
-    // Sync each contact
+    // Prepare bulk data
+    const contactsToCreate: any[] = []
+    const contactsToUpdate: any[] = []
+
     for (const faContact of freeAgentContacts) {
       // Extract FreeAgent ID from URL
       const freeAgentId = faContact.url.split('/').pop()!
@@ -113,38 +123,53 @@ export async function POST(request: NextRequest) {
       ].filter(Boolean)
       const address = addressParts.length > 0 ? addressParts.join(', ') : null
 
-      // Upsert contact
-      const existing = await prisma.contact.findUnique({
-        where: { freeAgentId }
-      })
-
-      if (existing) {
-        await prisma.contact.update({
-          where: { freeAgentId },
-          data: {
-            name,
-            email: faContact.email || null,
-            phone: faContact.phone_number || null,
-            address,
-            isActive: faContact.is_active ?? true,
-            syncedAt: new Date()
-          }
-        })
-        updated++
-      } else {
-        await prisma.contact.create({
-          data: {
-            freeAgentId,
-            name,
-            email: faContact.email || null,
-            phone: faContact.phone_number || null,
-            address,
-            isActive: faContact.is_active ?? true,
-            organizationId: org.id
-          }
-        })
-        created++
+      const contactData = {
+        freeAgentId,
+        name,
+        email: faContact.email || null,
+        phone: faContact.phone_number || null,
+        address,
+        isActive: faContact.is_active ?? true,
+        syncedAt: new Date(),
+        organizationId: org.id
       }
+
+      if (existingIds.has(freeAgentId)) {
+        contactsToUpdate.push(contactData)
+      } else {
+        contactsToCreate.push(contactData)
+      }
+    }
+
+    // Bulk create new contacts
+    let created = 0
+    if (contactsToCreate.length > 0) {
+      const result = await prisma.contact.createMany({
+        data: contactsToCreate,
+        skipDuplicates: true
+      })
+      created = result.count
+    }
+
+    // Bulk update existing contacts using transaction
+    let updated = 0
+    if (contactsToUpdate.length > 0) {
+      await prisma.$transaction(
+        contactsToUpdate.map(contact =>
+          prisma.contact.update({
+            where: { freeAgentId: contact.freeAgentId },
+            data: {
+              name: contact.name,
+              email: contact.email,
+              phone: contact.phone,
+              address: contact.address,
+              isActive: contact.isActive,
+              syncedAt: contact.syncedAt
+            }
+          })
+        )
+      )
+      updated = contactsToUpdate.length
     }
 
     // Add rate limit headers to success response
@@ -159,6 +184,22 @@ export async function POST(request: NextRequest) {
     }, { headers })
   } catch (error) {
     console.error('Error syncing contacts:', error)
+
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('429')) {
+        return NextResponse.json(
+          { error: 'FreeAgent rate limit exceeded. Please wait a few minutes and try again.' },
+          { status: 429 }
+        )
+      }
+
+      return NextResponse.json(
+        { error: `Failed to sync contacts: ${error.message}` },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Failed to sync contacts' },
       { status: 500 }

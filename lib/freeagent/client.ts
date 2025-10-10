@@ -139,8 +139,8 @@ export class FreeAgentClient {
     return response.json()
   }
 
-  // Make authenticated API request
-  private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
+  // Make authenticated API request with retry logic for rate limits
+  private async request(endpoint: string, options: RequestInit = {}, retries = 3): Promise<any> {
     const response = await fetch(`${FREEAGENT_API_URL}${endpoint}`, {
       ...options,
       headers: {
@@ -150,9 +150,20 @@ export class FreeAgentClient {
       }
     })
 
+    // Handle rate limiting with exponential backoff
+    if (response.status === 429 && retries > 0) {
+      const retryAfter = response.headers.get('Retry-After')
+      const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 5000 // Default 5s
+
+      console.warn(`FreeAgent rate limit hit, waiting ${waitTime}ms before retry...`)
+      await new Promise(resolve => setTimeout(resolve, waitTime))
+
+      return this.request(endpoint, options, retries - 1)
+    }
+
     if (!response.ok) {
       const error = await response.text()
-      throw new Error(`FreeAgent API error: ${error}`)
+      throw new Error(`FreeAgent API error (${response.status}): ${error}`)
     }
 
     return response.json()

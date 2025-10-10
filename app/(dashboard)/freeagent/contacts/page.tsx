@@ -65,7 +65,7 @@ function FreeAgentContactsContent() {
       const data = await response.json()
 
       if (response.ok) {
-        setMessage(`Successfully synced! Created: ${data.created}, Updated: ${data.updated}`)
+        setMessage(`Successfully synced! Created: ${data.created}, Updated: ${data.updated}, Total: ${data.total}`)
         // Fetch contacts again to show the new data
         fetchContacts()
       } else {
@@ -97,8 +97,9 @@ function FreeAgentContactsContent() {
             isLoading={syncing}
             variant="primary"
             size="md"
+            title={syncing ? 'This may take up to 60 seconds for large contact lists' : 'Sync contacts from FreeAgent'}
           >
-            {syncing ? 'Syncing...' : 'Sync from FreeAgent'}
+            {syncing ? 'Syncing... (this may take a minute)' : 'Sync from FreeAgent'}
           </Button>
         </div>
       </div>
