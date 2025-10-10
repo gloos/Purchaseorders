@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       await resend.emails.send({
         from: fromEmail,
         to: user.email,
-        subject: 'Reset Your Password',
+        subject: 'HelixFlow password reset',
         html: `
           <h2>Password Reset Request</h2>
           <p>Hi ${user.name || 'there'},</p>
@@ -66,8 +66,6 @@ export async function POST(request: Request) {
           <p><a href="${resetUrl}">Reset Password</a></p>
           <p>This link will expire in 1 hour.</p>
           <p>If you didn't request this, please ignore this email.</p>
-          <hr>
-          <p><small>PO Tool - Purchase Order Management</small></p>
         `
       })
     }
