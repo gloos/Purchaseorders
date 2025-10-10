@@ -148,9 +148,9 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       >
         {/* Logo Section */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
-          <Link href="/dashboard" className="flex items-center space-x-3">
-            {profile?.logoUrl && (
-              <div className="relative w-8 h-8 flex-shrink-0">
+          <Link href="/dashboard" className="flex items-center justify-center flex-1">
+            {profile?.logoUrl ? (
+              <div className="relative w-16 h-16">
                 <Image
                   src={profile.logoUrl}
                   alt={profile.name || 'Company Logo'}
@@ -158,10 +158,11 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                   className="object-contain"
                 />
               </div>
+            ) : (
+              <span className="text-lg font-bold text-slate-900 dark:text-white">
+                HelixFlow
+              </span>
             )}
-            <span className="text-lg font-bold text-slate-900 dark:text-white truncate">
-              {profile?.name || 'HelixFlow'}
-            </span>
           </Link>
 
           {/* Mobile close button */}
