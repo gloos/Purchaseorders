@@ -88,6 +88,12 @@ export default function SignUpPage() {
 
       if (!response.ok) {
         const data = await response.json()
+
+        // Show specific error message for closed signups
+        if (response.status === 403) {
+          throw new Error(data.error || 'Signups are currently closed')
+        }
+
         throw new Error(data.error || 'Failed to create organization')
       }
 

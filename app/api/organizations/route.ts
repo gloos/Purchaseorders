@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { createOrganizationSchema, validateRequestBody } from '@/lib/validations'
+import { checkSignupAvailability, incrementOrgCount } from '@/lib/platform-settings'
 
 // POST /api/organizations - Create a new organization and assign user to it
 export async function POST(request: Request) {
@@ -11,6 +12,15 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check if signups are available
+    const signupCheck = await checkSignupAvailability()
+    if (!signupCheck.available) {
+      return NextResponse.json(
+        { error: signupCheck.reason || 'Signups are currently closed' },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
@@ -71,6 +81,9 @@ export async function POST(request: Request) {
         value: 0
       }
     })
+
+    // Increment the platform organization counter
+    await incrementOrgCount()
 
     return NextResponse.json(organization, { status: 201 })
   } catch (error) {

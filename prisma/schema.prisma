@@ -140,6 +140,19 @@ model Organization {
   @@map("organizations")
 }
 
+// Platform Settings model - singleton table for global platform configuration
+// Only one row should exist in this table (enforced by application logic)
+model PlatformSettings {
+  id                String    @id @default("singleton") // Always use "singleton" as the ID
+  signupsEnabled    Boolean   @default(true) // Whether new organizations can sign up
+  maxOrganizations  Int?      // Max number of organizations allowed (null = unlimited)
+  currentOrgCount   Int       @default(0) // Current count of organizations (updated automatically)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("platform_settings")
+}
+
 // Contact/Supplier model - synced from FreeAgent
 model Contact {
   id                String    @id @default(uuid())
