@@ -151,7 +151,9 @@ function FreeAgentContactsContent() {
               {contacts.map((contact) => (
                 <tr key={contact.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-slate-900 dark:text-white">{contact.name}</div>
+                    <div className="text-sm font-medium text-slate-900 dark:text-white max-w-xs truncate" title={contact.name}>
+                      {contact.name}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-slate-900 dark:text-white">{contact.email || '-'}</div>
