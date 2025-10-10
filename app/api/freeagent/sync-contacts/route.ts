@@ -151,25 +151,32 @@ export async function POST(request: NextRequest) {
       created = result.count
     }
 
-    // Bulk update existing contacts using transaction
+    // Bulk update existing contacts in smaller batches to avoid transaction timeouts
     let updated = 0
     if (contactsToUpdate.length > 0) {
-      await prisma.$transaction(
-        contactsToUpdate.map(contact =>
-          prisma.contact.update({
-            where: { freeAgentId: contact.freeAgentId },
-            data: {
-              name: contact.name,
-              email: contact.email,
-              phone: contact.phone,
-              address: contact.address,
-              isActive: contact.isActive,
-              syncedAt: contact.syncedAt
-            }
-          })
+      const batchSize = 50 // Process 50 updates at a time
+
+      for (let i = 0; i < contactsToUpdate.length; i += batchSize) {
+        const batch = contactsToUpdate.slice(i, i + batchSize)
+
+        await prisma.$transaction(
+          batch.map(contact =>
+            prisma.contact.update({
+              where: { freeAgentId: contact.freeAgentId },
+              data: {
+                name: contact.name,
+                email: contact.email,
+                phone: contact.phone,
+                address: contact.address,
+                isActive: contact.isActive,
+                syncedAt: contact.syncedAt
+              }
+            })
+          )
         )
-      )
-      updated = contactsToUpdate.length
+
+        updated += batch.length
+      }
     }
 
     // Add rate limit headers to success response

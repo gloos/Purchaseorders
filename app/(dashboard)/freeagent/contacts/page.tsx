@@ -23,6 +23,7 @@ function FreeAgentContactsContent() {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState('')
+  const [syncProgress, setSyncProgress] = useState<{ current: number; total: number } | null>(null)
 
   useEffect(() => {
     // Check for success/error messages
@@ -57,25 +58,42 @@ function FreeAgentContactsContent() {
     try {
       setSyncing(true)
       setMessage('')
+      setSyncProgress(null)
+
+      // Start with indeterminate progress
+      setSyncProgress({ current: 0, total: 100 })
 
       const response = await fetch('/api/freeagent/sync-contacts', {
         method: 'POST'
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
-        setMessage(`Successfully synced! Created: ${data.created}, Updated: ${data.updated}, Total: ${data.total}`)
-        // Fetch contacts again to show the new data
-        fetchContacts()
-      } else {
-        setMessage(`Error: ${data.error || 'Failed to sync contacts'}`)
+      if (!response.ok) {
+        // Handle non-JSON error responses (like 504 HTML pages)
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json()
+          setMessage(`Error: ${data.error || 'Failed to sync contacts'}`)
+        } else {
+          if (response.status === 504) {
+            setMessage('Error: Sync timed out. Your contact list may be very large. Please try again in a few minutes.')
+          } else {
+            setMessage(`Error: Server returned ${response.status}. Please try again.`)
+          }
+        }
+        return
       }
+
+      const data = await response.json()
+      setMessage(`Successfully synced! Created: ${data.created}, Updated: ${data.updated}, Total: ${data.total}`)
+
+      // Fetch contacts again to show the new data
+      fetchContacts()
     } catch (error) {
       console.error('Error syncing contacts:', error)
-      setMessage('Error: Failed to sync contacts')
+      setMessage('Error: Failed to sync contacts. Please check your internet connection and try again.')
     } finally {
       setSyncing(false)
+      setSyncProgress(null)
     }
   }
 
@@ -83,9 +101,6 @@ function FreeAgentContactsContent() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-        <Link href="/dashboard" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
-          ← Back to Dashboard
-        </Link>
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">FreeAgent Contacts</h1>
@@ -103,6 +118,23 @@ function FreeAgentContactsContent() {
           </Button>
         </div>
       </div>
+
+      {/* Sync Progress Indicator */}
+      {syncing && syncProgress && (
+        <div className="mb-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
+              Syncing contacts from FreeAgent...
+            </span>
+          </div>
+          <div className="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-2 overflow-hidden">
+            <div className="bg-blue-600 h-2 rounded-full animate-pulse w-full"></div>
+          </div>
+          <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+            This may take up to a minute for large contact lists. Please don't close this page.
+          </p>
+        </div>
+      )}
 
       {message && (
         <div className={`mb-6 p-4 rounded-lg ${
