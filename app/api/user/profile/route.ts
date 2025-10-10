@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth-helpers'
 import * as Sentry from '@sentry/nextjs'
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const user = await getUser()
     if (!user) {
