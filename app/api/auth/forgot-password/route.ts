@@ -54,8 +54,9 @@ export async function POST(request: Request) {
       const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`
 
       const resend = getResendClient()
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
       await resend.emails.send({
-        from: 'PO Tool <noreply@your-domain.com>',
+        from: fromEmail,
         to: user.email,
         subject: 'Reset Your Password',
         html: `
