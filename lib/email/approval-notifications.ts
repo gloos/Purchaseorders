@@ -136,7 +136,7 @@ You can approve or deny this request from your dashboard.
 
   // Send to all admins
   await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'PO Tool <noreply@helixflow.app>',
+    from: process.env.RESEND_FROM_EMAIL || 'HelixFlow <noreply@helixflow.app>',
     to: params.to,
     subject: `Approval Required: PO #${params.poNumber}`,
     html,
@@ -240,7 +240,7 @@ View details: ${poUrl}
   `.trim()
 
   await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'PO Tool <noreply@helixflow.app>',
+    from: process.env.RESEND_FROM_EMAIL || 'HelixFlow <noreply@helixflow.app>',
     to: params.to,
     subject: `Approved: PO #${params.poNumber}`,
     html,
@@ -351,7 +351,7 @@ Edit purchase order: ${editUrl}
   `.trim()
 
   await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'PO Tool <noreply@helixflow.app>',
+    from: process.env.RESEND_FROM_EMAIL || 'HelixFlow <noreply@helixflow.app>',
     to: params.to,
     subject: `Denied: PO #${params.poNumber}`,
     html,

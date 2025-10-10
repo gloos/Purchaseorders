@@ -30,7 +30,7 @@ export default function DashboardLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">PO Tool</h1>
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">HelixFlow</h1>
             <div className="w-6" /> {/* Spacer for centering */}
           </header>
 

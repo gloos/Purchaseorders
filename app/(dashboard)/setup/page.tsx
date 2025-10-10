@@ -56,7 +56,7 @@ export default function SetupPage() {
           Setup Your Organization
         </h1>
         <p className="text-slate-600 dark:text-slate-400 mb-6">
-          Create an organization to get started with PO Tool
+          Create an organization to get started with HelixFlow
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

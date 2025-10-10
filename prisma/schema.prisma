@@ -1,4 +1,4 @@
-// Prisma schema for PO Tool
+// Prisma schema for HelixFlow
 // This defines the database models and relationships
 
 generator client {

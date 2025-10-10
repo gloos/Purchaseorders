@@ -59,7 +59,7 @@ function SignInForm() {
           Welcome Back
         </h1>
         <p className="text-slate-600 dark:text-slate-400 mt-2">
-          Sign in to your PO Tool account
+          Sign in to your HelixFlow account
         </p>
       </div>
 

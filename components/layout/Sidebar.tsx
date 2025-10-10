@@ -160,7 +160,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               </div>
             )}
             <span className="text-lg font-bold text-slate-900 dark:text-white truncate">
-              {profile?.name || 'PO Tool'}
+              {profile?.name || 'HelixFlow'}
             </span>
           </Link>
 

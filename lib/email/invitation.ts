@@ -122,7 +122,7 @@ If you didn't expect this invitation, you can safely ignore this email.
   `.trim()
 
   await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'PO Tool <noreply@helixflow.app>',
+    from: process.env.RESEND_FROM_EMAIL || 'HelixFlow <noreply@helixflow.app>',
     to,
     subject: `You've been invited to join ${organizationName}`,
     html,

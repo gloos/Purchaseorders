@@ -1,4 +1,4 @@
-# PO Tool
+# HelixFlow
 
 A modern purchase order management system built with Next.js 14, integrating with FreeAgent for accounting automation.
 

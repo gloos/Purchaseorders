@@ -61,7 +61,7 @@ export function Navbar() {
                 </div>
               )}
               <span className="text-xl font-bold text-slate-900 dark:text-white">
-                {profile?.name || 'PO Tool'}
+                {profile?.name || 'HelixFlow'}
               </span>
             </Link>
             <Link

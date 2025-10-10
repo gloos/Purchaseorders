@@ -5,7 +5,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "PO Tool - Purchase Order Management",
+  title: "HelixFlow - Purchase Order Management",
   description: "Manage purchase orders and integrate with FreeAgent",
 }
 

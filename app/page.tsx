@@ -16,7 +16,7 @@ export default async function Home() {
       <div className="z-10 max-w-3xl w-full">
         <div className="text-center">
           <h1 className="text-5xl font-bold mb-4 text-slate-900 dark:text-white">
-            PO Tool
+            HelixFlow
           </h1>
           <p className="text-xl text-slate-600 dark:text-slate-400 mb-8">
             Streamline your purchase order management with FreeAgent integration
