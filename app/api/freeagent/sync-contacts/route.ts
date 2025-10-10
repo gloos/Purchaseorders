@@ -152,15 +152,16 @@ export async function POST(request: NextRequest) {
       created = result.count
     }
 
-    // Bulk update existing contacts in smaller batches to avoid transaction timeouts
+    // Update existing contacts in parallel batches (no transactions to avoid pooler issues)
     let updated = 0
     if (contactsToUpdate.length > 0) {
-      const batchSize = 25 // Process 25 updates at a time for faster completion
+      const batchSize = 50 // Process 50 updates at a time
 
       for (let i = 0; i < contactsToUpdate.length; i += batchSize) {
         const batch = contactsToUpdate.slice(i, i + batchSize)
 
-        await prisma.$transaction(
+        // Use Promise.all instead of transaction to avoid connection pooler issues
+        await Promise.all(
           batch.map(contact =>
             prisma.contact.update({
               where: { freeAgentId: contact.freeAgentId },
